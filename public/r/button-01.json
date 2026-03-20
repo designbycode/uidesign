@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "button-01",
+  "title": "Button 01",
+  "description": "A simple button component.",
+  "dependencies": [
+    "button"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/ui/buttons/button-01.tsx",
+      "content": "import type { ButtonHTMLAttributes, ReactNode } from 'react';\nimport { Button } from '@/components/ui/button';\nimport { cn } from '@/lib/utils';\n\ninterface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {\n    children: ReactNode;\n    className?: string;\n}\n\nexport default function Button01({className, children, ...props}: ButtonProps  ) {\n    return (\n        <Button className={cn('bg-sky-500 px-4 py-3 rounded-lg', className)} {...props}>{children}</Button>\n    )\n}\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:component"
+}

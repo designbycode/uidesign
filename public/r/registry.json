@@ -1,0 +1,69 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "name": "uidesign",
+    "homepage": "https://uidesign.co.za",
+    "items": [
+        {
+            "name": "card-01",
+            "type": "registry:component",
+            "title": "Card 01",
+            "description": "A versatile card component with header, title, description, content, and footer sections.",
+            "files": [
+                {
+                    "path": "registry/new-york/ui/cards/card-01.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "use-local-storage",
+            "type": "registry:hook",
+            "title": "useLocalStorage",
+            "description": "A React hook for persisting state in localStorage.",
+            "files": [
+                {
+                    "path": "registry/new-york/hooks/use-local-storage.ts",
+                    "type": "registry:hook"
+                }
+            ]
+        },
+        {
+            "name": "login-01",
+            "type": "registry:block",
+            "title": "Login 01",
+            "description": "A login form block with email and password fields.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/login/login-01.tsx",
+                    "type": "registry:block"
+                }
+            ]
+        },
+        {
+            "name": "button-01",
+            "type": "registry:component",
+            "title": "Button 01",
+            "description": "A simple button component.",
+            "dependencies": ["button"],
+            "files": [
+                {
+                    "path": "registry/new-york/ui/buttons/button-01.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "auth-card",
+            "type": "registry:component",
+            "title": "Auth Card",
+            "description": "A card component for authentication with email and password fields.",
+            "dependencies": ["button", "card", "input", "label"],
+            "files": [
+                {
+                    "path": "registry/new-york/cards/auth-card.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        }
+    ]
+}
