@@ -7,165 +7,138 @@ import {
     ChevronLeft,
     ChevronRight,
     Plus,
-    X,
 } from 'lucide-react';
 import * as React from 'react';
-import { useState, useCallback, useRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import type { FileItem } from './multi-image-drop';
 
-interface FileWithStatus {
-    id: string;
-    file: File;
-    preview: string;
-    progress: number;
-    status: 'uploading' | 'complete';
-}
+const generateId = () =>
+    `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-interface GalleryDropzoneCarouselProps {
-    onFilesSelect?: (files: File[]) => void;
+interface CarouselDropzoneProps {
+    onFiles: (files: File[]) => void;
     maxFiles?: number;
     maxSize?: number;
+    files: FileItem[];
+    onFilesChange: (files: FileItem[]) => void;
+    activeIndex?: number;
+    onActiveIndexChange?: (index: number) => void;
     className?: string;
 }
 
-export function GalleryDropzoneCarousel({
-    onFilesSelect,
+export function CarouselDropzone({
+    onFiles,
     maxFiles = 10,
     maxSize = 10 * 1024 * 1024,
+    files,
+    onFilesChange,
+    activeIndex: controlledActiveIndex,
+    onActiveIndexChange,
     className,
-}: GalleryDropzoneCarouselProps) {
-    const [files, setFiles] = useState<FileWithStatus[]>([]);
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [isDragOver, setIsDragOver] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
-    const intervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+}: CarouselDropzoneProps) {
+    const [internalActiveIndex, setInternalActiveIndex] = React.useState(0);
+    const [isDragOver, setIsDragOver] = React.useState(false);
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        return () => {
-            intervalsRef.current.forEach((interval) => clearInterval(interval));
-        };
-    }, []);
+    const activeIndex =
+        controlledActiveIndex !== undefined
+            ? controlledActiveIndex
+            : internalActiveIndex;
 
-    const clearFileInterval = useCallback((id: string) => {
-        const interval = intervalsRef.current.get(id);
+    const setActiveIndex = React.useCallback(
+        (value: number | ((prev: number) => number)) => {
+            if (typeof value === 'function') {
+                if (onActiveIndexChange) {
+                    onActiveIndexChange(value(internalActiveIndex));
+                } else {
+                    setInternalActiveIndex(value);
+                }
+            } else {
+                if (onActiveIndexChange) {
+                    onActiveIndexChange(value);
+                } else {
+                    setInternalActiveIndex(value);
+                }
+            }
+        },
+        [onActiveIndexChange, internalActiveIndex],
+    );
 
-        if (interval) {
-            clearInterval(interval);
-            intervalsRef.current.delete(id);
-        }
-    }, []);
+    const simulateUpload = React.useCallback(
+        (id: string) => {
+            const interval = setInterval(() => {
+                onFilesChange(
+                    files.map((f) => {
+                        if (f.id !== id || f.progress === undefined) {
+                            return f;
+                        }
 
-    const handleFiles = useCallback(
-        (newFiles: FileList) => {
+                        const newProgress = f.progress + Math.random() * 18 + 5;
+
+                        if (newProgress >= 100) {
+                            clearInterval(interval);
+
+                            return {
+                                ...f,
+                                progress: 100,
+                                status: 'complete' as const,
+                            };
+                        }
+
+                        return { ...f, progress: newProgress };
+                    }),
+                );
+            }, 100);
+        },
+        [files, onFilesChange],
+    );
+
+    const processFiles = React.useCallback(
+        (newFiles: FileList | File[]) => {
             const fileArray = Array.from(newFiles);
-            const currentFileCount = files.length;
-            const remainingSlots = maxFiles - currentFileCount;
+            const remainingSlots = maxFiles - files.length;
             const filesToProcess = fileArray.slice(0, remainingSlots);
 
-            const newFileObjects: FileWithStatus[] = filesToProcess
+            const newFileItems: FileItem[] = filesToProcess
                 .filter(
                     (file) =>
                         file.type.startsWith('image/') && file.size <= maxSize,
                 )
                 .map((file) => ({
-                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`,
+                    id: generateId(),
                     file,
                     preview: URL.createObjectURL(file),
-                    progress: 0,
                     status: 'uploading' as const,
+                    progress: 0,
                 }));
 
-            if (newFileObjects.length === 0) {
-return;
-}
+            const allFiles = [...files, ...newFileItems].slice(0, maxFiles);
+            onFilesChange(allFiles);
 
-            const updated = [...files, ...newFileObjects].slice(0, maxFiles);
-            setFiles(updated);
-            setActiveIndex(0);
-
-            newFileObjects.forEach((fileObj) => {
-                const intervalId = setInterval(() => {
-                    setFiles((prev) => {
-                        const fileIndex = prev.findIndex(
-                            (f) => f.id === fileObj.id,
-                        );
-
-                        if (fileIndex === -1) {
-                            clearFileInterval(fileObj.id);
-
-                            return prev;
-                        }
-
-                        const file = prev[fileIndex];
-
-                        if (file.status === 'complete') {
-                            clearFileInterval(fileObj.id);
-
-                            return prev;
-                        }
-
-                        const newProgress =
-                            file.progress + Math.random() * 18 + 5;
-
-                        if (newProgress >= 100) {
-                            clearFileInterval(fileObj.id);
-
-                            return prev.map((f, idx) =>
-                                idx === fileIndex
-                                    ? {
-                                          ...f,
-                                          progress: 100,
-                                          status: 'complete' as const,
-                                      }
-                                    : f,
-                            );
-                        }
-
-                        return prev.map((f, idx) =>
-                            idx === fileIndex
-                                ? { ...f, progress: newProgress }
-                                : f,
-                        );
-                    });
-                }, 100);
-
-                intervalsRef.current.set(fileObj.id, intervalId);
+            newFileItems.forEach((f) => {
+                setTimeout(() => simulateUpload(f.id), 50);
             });
 
-            onFilesSelect?.(updated.map((f) => f.file));
+            onFiles(allFiles.map((f) => f.file));
         },
-        [files, maxFiles, maxSize, onFilesSelect, clearFileInterval],
+        [files, maxFiles, maxSize, onFiles, onFilesChange, simulateUpload],
     );
 
-    const handleDrop = useCallback(
+    const handleDrop = React.useCallback(
         (e: React.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
             setIsDragOver(false);
 
-            if (e.dataTransfer.files.length) {
-                handleFiles(e.dataTransfer.files);
+            if (e.dataTransfer.files.length > 0) {
+                processFiles(e.dataTransfer.files);
             }
         },
-        [handleFiles],
-    );
-
-    const handleRemove = useCallback(
-        (id: string) => {
-            clearFileInterval(id);
-            const updated = files.filter((f) => f.id !== id);
-            setFiles(updated);
-            onFilesSelect?.(updated.map((f) => f.file));
-
-            if (activeIndex >= updated.length) {
-                setActiveIndex(Math.max(0, updated.length - 1));
-            }
-        },
-        [files, activeIndex, onFilesSelect, clearFileInterval],
+        [processFiles],
     );
 
     const activeImage = files[activeIndex];
@@ -182,8 +155,8 @@ return;
                         e.preventDefault();
 
                         if (files.length === 0) {
-inputRef.current?.click();
-}
+                            inputRef.current?.click();
+                        }
                     }
                 }}
                 onDrop={handleDrop}
@@ -191,7 +164,10 @@ inputRef.current?.click();
                     e.preventDefault();
                     setIsDragOver(true);
                 }}
-                onDragLeave={() => setIsDragOver(false)}
+                onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(false);
+                }}
                 className={cn(
                     'relative aspect-[16/10] overflow-hidden rounded-lg border-2 transition-all',
                     files.length === 0 && 'cursor-pointer border-dashed',
@@ -220,23 +196,30 @@ inputRef.current?.click();
                     </div>
                 ) : activeImage ? (
                     <>
-                        <img
-                            src={activeImage.preview}
-                            alt=""
-                            className="h-full w-full bg-muted object-contain"
-                        />
-
-                        {activeImage.status === 'uploading' && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70">
-                                <span className="mb-2 text-lg font-bold">
-                                    {Math.round(activeImage.progress)}%
-                                </span>
-                                <Progress
-                                    value={activeImage.progress}
-                                    className="h-2 w-1/2"
-                                />
+                        {activeImage.preview ? (
+                            <img
+                                src={activeImage.preview}
+                                alt=""
+                                className="h-full w-full bg-muted object-contain"
+                            />
+                        ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-muted">
+                                <ImageIcon className="size-12 text-muted-foreground" />
                             </div>
                         )}
+
+                        {activeImage.status === 'uploading' &&
+                            activeImage.progress !== undefined && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70">
+                                    <span className="mb-2 text-lg font-bold">
+                                        {Math.round(activeImage.progress)}%
+                                    </span>
+                                    <Progress
+                                        value={activeImage.progress}
+                                        className="h-2 w-1/2"
+                                    />
+                                </div>
+                            )}
 
                         {activeImage.status === 'complete' && (
                             <Badge className="bg-success text-success-foreground absolute top-3 right-3 gap-1">
@@ -245,16 +228,41 @@ inputRef.current?.click();
                             </Badge>
                         )}
 
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const newIndex =
+                                    (activeIndex - 1 + files.length) %
+                                    files.length;
+                                setActiveIndex(newIndex);
+                            }}
+                            className="absolute top-1/2 left-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-foreground/80 text-background hover:bg-foreground"
+                            aria-label="Previous image"
+                        >
+                            <ChevronLeft className="size-5" />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const newIndex =
+                                    (activeIndex + 1) % files.length;
+                                setActiveIndex(newIndex);
+                            }}
+                            className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-foreground/80 text-background hover:bg-foreground"
+                            aria-label="Next image"
+                        >
+                            <ChevronRight className="size-5" />
+                        </button>
+
                         {files.length > 1 && (
                             <>
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setActiveIndex(
-                                            (prev) =>
-                                                (prev - 1 + files.length) %
-                                                files.length,
-                                        );
+                                        const newIndex =
+                                            (activeIndex - 1 + files.length) %
+                                            files.length;
+                                        setActiveIndex(newIndex);
                                     }}
                                     className="absolute top-1/2 left-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-foreground/80 text-background hover:bg-foreground"
                                     aria-label="Previous image"
@@ -264,9 +272,9 @@ inputRef.current?.click();
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setActiveIndex(
-                                            (prev) => (prev + 1) % files.length,
-                                        );
+                                        const newIndex =
+                                            (activeIndex + 1) % files.length;
+                                        setActiveIndex(newIndex);
                                     }}
                                     className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-foreground/80 text-background hover:bg-foreground"
                                     aria-label="Next image"
@@ -279,17 +287,6 @@ inputRef.current?.click();
                         <div className="absolute bottom-3 left-3 rounded-full bg-foreground/80 px-2 py-0.5 text-xs text-background">
                             {activeIndex + 1} / {files.length}
                         </div>
-
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemove(activeImage.id);
-                            }}
-                            className="absolute top-3 left-3 flex size-8 items-center justify-center rounded-full bg-foreground/80 text-background opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive"
-                            aria-label="Remove current image"
-                        >
-                            <X className="size-4" />
-                        </button>
                     </>
                 ) : null}
 
@@ -308,8 +305,8 @@ inputRef.current?.click();
                 className="sr-only"
                 onChange={(e) => {
                     if (e.target.files) {
-handleFiles(e.target.files);
-}
+                        processFiles(e.target.files);
+                    }
                 }}
             />
 
@@ -334,13 +331,14 @@ handleFiles(e.target.files);
                                     alt=""
                                     className="h-full w-full object-cover"
                                 />
-                                {file.status === 'uploading' && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-background/60">
-                                        <span className="text-xs font-medium">
-                                            {Math.round(file.progress)}%
-                                        </span>
-                                    </div>
-                                )}
+                                {file.status === 'uploading' &&
+                                    file.progress !== undefined && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-background/60">
+                                            <span className="text-xs font-medium">
+                                                {Math.round(file.progress)}%
+                                            </span>
+                                        </div>
+                                    )}
                             </button>
                         ))}
 

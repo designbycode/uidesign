@@ -1,8 +1,7 @@
 'use client';
 
-import { Upload, X, Check, Plus, Images } from 'lucide-react';
+import { ImageIcon, Upload, X, Check, Plus, Images } from 'lucide-react';
 import * as React from 'react';
-import { useState, useCallback, useRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,182 +15,148 @@ import {
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import type { FileItem } from './multi-image-drop';
 
-interface FileWithStatus {
-    id: string;
-    file: File;
-    preview: string;
-    progress: number;
-    status: 'uploading' | 'complete';
-}
+const generateId = () =>
+    `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-interface GalleryDropzoneDialogProps {
-    onFilesSelect?: (files: File[]) => void;
+interface DialogDropzoneProps {
+    onFiles: (files: File[]) => void;
     maxFiles?: number;
     maxSize?: number;
+    files: FileItem[];
+    onFilesChange: (files: FileItem[]) => void;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    trigger?: React.ReactNode;
+    triggerLabel?: string;
     className?: string;
 }
 
-export function GalleryDropzoneDialog({
-    onFilesSelect,
+export function DialogDropzone({
+    onFiles,
     maxFiles = 12,
     maxSize = 10 * 1024 * 1024,
+    files,
+    onFilesChange,
+    open: controlledOpen,
+    onOpenChange,
+    trigger,
+    triggerLabel = 'Upload Gallery',
     className,
-}: GalleryDropzoneDialogProps) {
-    const [files, setFiles] = useState<FileWithStatus[]>([]);
-    const [isOpen, setIsOpen] = useState(false);
-    const [isDragOver, setIsDragOver] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
-    const intervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+}: DialogDropzoneProps) {
+    const [internalOpen, setInternalOpen] = React.useState(false);
+    const [isDragOver, setIsDragOver] = React.useState(false);
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        return () => {
-            intervalsRef.current.forEach((interval) => clearInterval(interval));
-        };
-    }, []);
+    const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+    const setIsOpen = onOpenChange || setInternalOpen;
 
-    const clearFileInterval = useCallback((id: string) => {
-        const interval = intervalsRef.current.get(id);
+    const simulateUpload = React.useCallback(
+        (id: string) => {
+            const interval = setInterval(() => {
+                onFilesChange(
+                    files.map((f) => {
+                        if (f.id !== id || f.progress === undefined) {
+return f;
+}
 
-        if (interval) {
-            clearInterval(interval);
-            intervalsRef.current.delete(id);
-        }
-    }, []);
+                        const newProgress = f.progress + Math.random() * 20 + 5;
 
-    const handleFiles = useCallback(
-        (newFiles: FileList) => {
+                        if (newProgress >= 100) {
+                            clearInterval(interval);
+
+                            return {
+                                ...f,
+                                progress: 100,
+                                status: 'complete' as const,
+                            };
+                        }
+
+                        return { ...f, progress: newProgress };
+                    }),
+                );
+            }, 100);
+        },
+        [files, onFilesChange],
+    );
+
+    const processFiles = React.useCallback(
+        (newFiles: FileList | File[]) => {
             const fileArray = Array.from(newFiles);
-            const currentFileCount = files.length;
-            const remainingSlots = maxFiles - currentFileCount;
+            const remainingSlots = maxFiles - files.length;
             const filesToProcess = fileArray.slice(0, remainingSlots);
 
-            const newFileObjects: FileWithStatus[] = filesToProcess
+            const newFileItems: FileItem[] = filesToProcess
                 .filter(
                     (file) =>
                         file.type.startsWith('image/') && file.size <= maxSize,
                 )
                 .map((file) => ({
-                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`,
+                    id: generateId(),
                     file,
                     preview: URL.createObjectURL(file),
-                    progress: 0,
                     status: 'uploading' as const,
+                    progress: 0,
                 }));
 
-            if (newFileObjects.length === 0) {
-return;
-}
+            const allFiles = [...files, ...newFileItems].slice(0, maxFiles);
+            onFilesChange(allFiles);
 
-            const updated = [...files, ...newFileObjects].slice(0, maxFiles);
-            setFiles(updated);
-
-            newFileObjects.forEach((fileObj) => {
-                const intervalId = setInterval(() => {
-                    setFiles((prev) => {
-                        const fileIndex = prev.findIndex(
-                            (f) => f.id === fileObj.id,
-                        );
-
-                        if (fileIndex === -1) {
-                            clearFileInterval(fileObj.id);
-
-                            return prev;
-                        }
-
-                        const file = prev[fileIndex];
-
-                        if (file.status === 'complete') {
-                            clearFileInterval(fileObj.id);
-
-                            return prev;
-                        }
-
-                        const newProgress =
-                            file.progress + Math.random() * 20 + 5;
-
-                        if (newProgress >= 100) {
-                            clearFileInterval(fileObj.id);
-
-                            return prev.map((f, idx) =>
-                                idx === fileIndex
-                                    ? {
-                                          ...f,
-                                          progress: 100,
-                                          status: 'complete' as const,
-                                      }
-                                    : f,
-                            );
-                        }
-
-                        return prev.map((f, idx) =>
-                            idx === fileIndex
-                                ? { ...f, progress: newProgress }
-                                : f,
-                        );
-                    });
-                }, 100);
-
-                intervalsRef.current.set(fileObj.id, intervalId);
+            newFileItems.forEach((f) => {
+                setTimeout(() => simulateUpload(f.id), 50);
             });
 
-            onFilesSelect?.(updated.map((f) => f.file));
+            onFiles(allFiles.map((f) => f.file));
         },
-        [files, maxFiles, maxSize, onFilesSelect, clearFileInterval],
+        [files, maxFiles, maxSize, onFiles, onFilesChange, simulateUpload],
     );
 
-    const handleDrop = useCallback(
+    const handleDrop = React.useCallback(
         (e: React.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
             setIsDragOver(false);
 
-            if (e.dataTransfer.files.length) {
-                handleFiles(e.dataTransfer.files);
+            if (e.dataTransfer.files.length > 0) {
+                processFiles(e.dataTransfer.files);
             }
         },
-        [handleFiles],
+        [processFiles],
     );
 
-    const handleRemove = useCallback(
+    const handleRemove = React.useCallback(
         (id: string) => {
-            clearFileInterval(id);
             const updated = files.filter((f) => f.id !== id);
-            setFiles(updated);
-            onFilesSelect?.(
-                updated
-                    .filter((f) => f.status === 'complete')
-                    .map((f) => f.file),
-            );
+            onFilesChange(updated);
+            onFiles(updated.map((f) => f.file));
         },
-        [files, onFilesSelect, clearFileInterval],
+        [files, onFiles, onFilesChange],
     );
 
-    const handleClearAll = useCallback(() => {
-        intervalsRef.current.forEach((interval) => clearInterval(interval));
-        intervalsRef.current.clear();
+    const handleClearAll = React.useCallback(() => {
         files.forEach((f) => {
             if (f.preview.startsWith('blob:')) {
                 URL.revokeObjectURL(f.preview);
             }
         });
-        setFiles([]);
+        onFilesChange([]);
+        onFiles([]);
 
         if (inputRef.current) {
             inputRef.current.value = '';
         }
-    }, [files]);
+    }, [files, onFiles, onFilesChange]);
 
-    const handleSave = useCallback(() => {
-        const completedFiles = files
-            .filter((f) => f.status === 'complete')
-            .map((f) => f.file);
-        onFilesSelect?.(completedFiles);
+    const handleSave = React.useCallback(() => {
+        onFiles(
+            files.filter((f) => f.status === 'complete').map((f) => f.file),
+        );
         handleClearAll();
         setIsOpen(false);
-    }, [files, onFilesSelect, handleClearAll]);
+    }, [files, onFiles, onFilesChange, handleClearAll, setIsOpen]);
 
-    const handleOpenChange = useCallback(
+    const handleOpenChange = React.useCallback(
         (open: boolean) => {
             setIsOpen(open);
 
@@ -199,7 +164,7 @@ return;
                 handleClearAll();
             }
         },
-        [handleClearAll],
+        [handleClearAll, setIsOpen],
     );
 
     const successCount = files.filter((f) => f.status === 'complete').length;
@@ -207,15 +172,20 @@ return;
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button variant="outline" className={cn('gap-2', className)}>
-                    <Images className="size-4" />
-                    Upload Gallery
-                    {successCount > 0 && (
-                        <Badge variant="secondary" className="ml-1">
-                            {successCount}
-                        </Badge>
-                    )}
-                </Button>
+                {trigger || (
+                    <Button
+                        variant="outline"
+                        className={cn('gap-2', className)}
+                    >
+                        <Images className="size-4" />
+                        {triggerLabel}
+                        {successCount > 0 && (
+                            <Badge variant="secondary" className="ml-1">
+                                {successCount}
+                            </Badge>
+                        )}
+                    </Button>
+                )}
             </DialogTrigger>
 
             <DialogContent className="max-w-2xl">
@@ -248,7 +218,10 @@ inputRef.current?.click();
                         e.preventDefault();
                         setIsDragOver(true);
                     }}
-                    onDragLeave={() => setIsDragOver(false)}
+                    onDragLeave={(e) => {
+                        e.preventDefault();
+                        setIsDragOver(false);
+                    }}
                     className={cn(
                         'relative min-h-[300px] rounded-lg border-2 border-dashed p-4 transition-all',
                         files.length < maxFiles && 'cursor-pointer',
@@ -278,23 +251,30 @@ inputRef.current?.click();
                                     key={file.id}
                                     className="group relative aspect-square overflow-hidden rounded-md border bg-muted"
                                 >
-                                    <img
-                                        src={file.preview}
-                                        alt=""
-                                        className="h-full w-full object-cover"
-                                    />
-
-                                    {file.status === 'uploading' && (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70">
-                                            <span className="mb-1 text-sm font-medium">
-                                                {Math.round(file.progress)}%
-                                            </span>
-                                            <Progress
-                                                value={file.progress}
-                                                className="h-1.5 w-3/4"
-                                            />
+                                    {file.preview ? (
+                                        <img
+                                            src={file.preview}
+                                            alt=""
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center">
+                                            <ImageIcon className="size-8 text-muted-foreground" />
                                         </div>
                                     )}
+
+                                    {file.status === 'uploading' &&
+                                        file.progress !== undefined && (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70">
+                                                <span className="mb-1 text-sm font-medium">
+                                                    {Math.round(file.progress)}%
+                                                </span>
+                                                <Progress
+                                                    value={file.progress}
+                                                    className="h-1.5 w-3/4"
+                                                />
+                                            </div>
+                                        )}
 
                                     {file.status === 'complete' && (
                                         <div className="bg-success absolute top-1.5 right-1.5 rounded-full p-1">
@@ -347,7 +327,7 @@ inputRef.current?.click();
                     className="sr-only"
                     onChange={(e) => {
                         if (e.target.files) {
-handleFiles(e.target.files);
+processFiles(e.target.files);
 }
                     }}
                 />
@@ -355,7 +335,6 @@ handleFiles(e.target.files);
                 <DialogFooter className="gap-2 sm:gap-0">
                     <div className="mr-auto text-sm text-muted-foreground">
                         {files.length} of {maxFiles} images
-                        {successCount > 0 && ` (${successCount} done)`}
                     </div>
                     <Button
                         variant="outline"

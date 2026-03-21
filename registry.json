@@ -28,6 +28,14 @@
             }
         },
         {
+            "name": "use-global-drag",
+            "description": "Use global drag hook",
+            "file": {
+                "path": "registry/new-york/hooks/use-global-drag.ts",
+                "type": "registry:hook"
+            }
+        },
+        {
             "name": "use-image-dropzone",
             "description": "Use image dropzone hook",
             "file": {
@@ -81,12 +89,6 @@
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-badge.tsx",
                     "type": "registry:block"
                 }
-            ],
-            "registryDependencies": [
-                "avatar",
-                "badge",
-                "progress",
-                "tooltip"
             ]
         },
         {
@@ -99,13 +101,6 @@
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-card.tsx",
                     "type": "registry:block"
                 }
-            ],
-            "registryDependencies": [
-                "avatar",
-                "badge",
-                "button",
-                "card",
-                "progress"
             ]
         },
         {
@@ -118,11 +113,6 @@
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-field.tsx",
                     "type": "registry:block"
                 }
-            ],
-            "registryDependencies": [
-                "avatar",
-                "button",
-                "label"
             ]
         },
         {
@@ -135,9 +125,6 @@
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-ghost.tsx",
                     "type": "registry:block"
                 }
-            ],
-            "registryDependencies": [
-                "avatar"
             ]
         },
         {
@@ -150,11 +137,6 @@
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-inline.tsx",
                     "type": "registry:block"
                 }
-            ],
-            "registryDependencies": [
-                "avatar",
-                "button",
-                "skeleton"
             ]
         },
         {
@@ -167,10 +149,6 @@
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-minimal.tsx",
                     "type": "registry:block"
                 }
-            ],
-            "registryDependencies": [
-                "avatar",
-                "spinner"
             ]
         },
         {
@@ -183,9 +161,6 @@
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-outlined.tsx",
                     "type": "registry:block"
                 }
-            ],
-            "registryDependencies": [
-                "button"
             ]
         },
         {
@@ -247,11 +222,6 @@
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-square.tsx",
                     "type": "registry:block"
                 }
-            ],
-            "registryDependencies": [
-                "badge",
-                "button",
-                "progress"
             ]
         },
         {
@@ -270,9 +240,6 @@
                 "button",
                 "progress",
                 "scroll"
-            ],
-            "hooks": [
-                "use-drag-over"
             ]
         },
         {
@@ -288,11 +255,7 @@
             ],
             "registryDependencies": [
                 "button",
-                "progress",
                 "tooltip"
-            ],
-            "hooks": [
-                "use-drag-over"
             ]
         },
         {
@@ -311,10 +274,6 @@
                 "button",
                 "dialog",
                 "progress"
-            ],
-            "hooks": [
-                "use-image-dropzone",
-                "use-upload-progress"
             ]
         },
         {
@@ -334,9 +293,6 @@
                 "progress",
                 "scroll",
                 "separator"
-            ],
-            "hooks": [
-                "use-upload-progress"
             ]
         },
         {
@@ -355,9 +311,6 @@
                 "button",
                 "card",
                 "progress"
-            ],
-            "hooks": [
-                "use-drag-over"
             ]
         },
         {
@@ -373,9 +326,6 @@
             ],
             "registryDependencies": [
                 "badge"
-            ],
-            "hooks": [
-                "use-image-dropzone"
             ]
         },
         {
@@ -391,9 +341,6 @@
             ],
             "registryDependencies": [
                 "button"
-            ],
-            "hooks": [
-                "use-image-dropzone"
             ]
         },
         {
@@ -414,10 +361,6 @@
             ],
             "dependencies": [
                 "@dnd-kit/react"
-            ],
-            "hooks": [
-                "use-image-dropzone",
-                "use-sortable-files"
             ]
         },
         {
@@ -436,10 +379,6 @@
             ],
             "dependencies": [
                 "@dnd-kit/react"
-            ],
-            "hooks": [
-                "use-image-dropzone",
-                "use-sortable-files"
             ]
         },
         {
@@ -461,10 +400,6 @@
             ],
             "dependencies": [
                 "@dnd-kit/react"
-            ],
-            "hooks": [
-                "use-image-dropzone",
-                "use-sortable-files"
             ]
         },
         {
@@ -482,9 +417,6 @@
                 "button",
                 "progress",
                 "table"
-            ],
-            "hooks": [
-                "use-drag-over"
             ]
         }
     ]

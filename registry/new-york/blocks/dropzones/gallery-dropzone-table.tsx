@@ -1,8 +1,8 @@
 'use client';
 
-import type { File } from 'lucide-react';
-import { Upload, X, Check } from 'lucide-react';
+import { Upload, X, Check, FileWarning } from 'lucide-react';
 import * as React from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -14,12 +14,11 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { useDragOver } from '@/hooks/use-drag-over';
 
-interface FileWithProgress {
+interface FileWithStatus {
+    id: string;
     file: File;
     preview: string;
-    id: string;
     progress: number;
     status: 'uploading' | 'complete' | 'error';
 }
@@ -37,55 +36,55 @@ export function GalleryDropzoneTable({
     maxSize = 10 * 1024 * 1024,
     className,
 }: GalleryDropzoneTableProps) {
-    const [files, setFiles] = React.useState<FileWithProgress[]>([]);
-    const inputRef = React.useRef<HTMLInputElement>(null);
+    const [files, setFiles] = useState<FileWithStatus[]>([]);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    const handleFiles = React.useCallback(
+    const handleFiles = useCallback(
         (newFiles: FileList) => {
-            const validFiles = Array.from(newFiles)
+            const fileArray = Array.from(newFiles);
+            const remainingSlots = maxFiles - files.length;
+            const filesToProcess = fileArray.slice(0, remainingSlots);
+
+            const newFileObjects = filesToProcess
                 .filter(
                     (file) =>
                         file.type.startsWith('image/') && file.size <= maxSize,
                 )
-                .slice(0, maxFiles - files.length);
-
-            const newFileObjects = validFiles.map((file) => ({
-                file,
-                preview: URL.createObjectURL(file),
-                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                progress: 0,
-                status: 'uploading' as const,
-            }));
+                .map((file) => ({
+                    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                    file,
+                    preview: URL.createObjectURL(file),
+                    progress: 0,
+                    status: 'uploading' as const,
+                }));
 
             const updated = [...files, ...newFileObjects].slice(0, maxFiles);
             setFiles(updated);
 
             newFileObjects.forEach((fileObj) => {
-                let progress = 0;
                 const interval = setInterval(() => {
-                    progress += Math.random() * 30;
+                    setFiles((prev) =>
+                        prev.map((f) => {
+                            if (f.id !== fileObj.id) {
+return f;
+}
 
-                    if (progress >= 100) {
-                        progress = 100;
-                        clearInterval(interval);
-                        setFiles((prev) =>
-                            prev.map((f) =>
-                                f.id === fileObj.id
-                                    ? {
-                                          ...f,
-                                          progress: 100,
-                                          status: 'complete',
-                                      }
-                                    : f,
-                            ),
-                        );
-                    } else {
-                        setFiles((prev) =>
-                            prev.map((f) =>
-                                f.id === fileObj.id ? { ...f, progress } : f,
-                            ),
-                        );
-                    }
+                            const newProgress = f.progress + Math.random() * 30;
+
+                            if (newProgress >= 100) {
+                                clearInterval(interval);
+
+                                return {
+                                    ...f,
+                                    progress: 100,
+                                    status: 'complete' as const,
+                                };
+                            }
+
+                            return { ...f, progress: newProgress };
+                        }),
+                    );
                 }, 200);
             });
 
@@ -94,16 +93,19 @@ export function GalleryDropzoneTable({
         [files, maxFiles, maxSize, onFilesSelect],
     );
 
-    const handleDrop = React.useCallback(
-        (droppedFiles: FileList) => {
-            handleFiles(droppedFiles);
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
+
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
         },
         [handleFiles],
     );
 
-    const { isDragOver, dragProps } = useDragOver({ onDrop: handleDrop });
-
-    const removeFile = React.useCallback(
+    const handleRemove = useCallback(
         (id: string) => {
             const updated = files.filter((f) => f.id !== id);
             setFiles(updated);
@@ -114,12 +116,12 @@ export function GalleryDropzoneTable({
 
     const formatSize = (bytes: number) => {
         if (bytes < 1024) {
-            return `${bytes} B`;
-        }
+return `${bytes} B`;
+}
 
         if (bytes < 1024 * 1024) {
-            return `${(bytes / 1024).toFixed(1)} KB`;
-        }
+return `${(bytes / 1024).toFixed(1)} KB`;
+}
 
         return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
     };
@@ -133,8 +135,19 @@ export function GalleryDropzoneTable({
                         ? 'border-primary bg-muted/50'
                         : 'border-muted-foreground/25 hover:border-muted-foreground/50',
                 )}
-                {...dragProps}
+                onDrop={handleDrop}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
                 onClick={() => inputRef.current?.click()}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        inputRef.current?.click();
+                    }
+                }}
                 tabIndex={0}
                 role="button"
                 aria-label="Upload images"
@@ -146,8 +159,8 @@ export function GalleryDropzoneTable({
                     multiple
                     onChange={(e) => {
                         if (e.target.files) {
-                            handleFiles(e.target.files);
-                        }
+handleFiles(e.target.files);
+}
                     }}
                     className="sr-only"
                 />
@@ -201,10 +214,15 @@ export function GalleryDropzoneTable({
                                                     {Math.round(file.progress)}%
                                                 </span>
                                             </div>
-                                        ) : (
+                                        ) : file.status === 'complete' ? (
                                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                                <Check className="size-4" />
+                                                <Check className="size-4" />{' '}
                                                 Complete
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-1 text-sm text-destructive">
+                                                <FileWarning className="size-4" />{' '}
+                                                Error
                                             </div>
                                         )}
                                     </TableCell>
@@ -213,7 +231,9 @@ export function GalleryDropzoneTable({
                                             variant="ghost"
                                             size="icon"
                                             className="size-8"
-                                            onClick={() => removeFile(file.id)}
+                                            onClick={() =>
+                                                handleRemove(file.id)
+                                            }
                                         >
                                             <X className="size-4" />
                                         </Button>

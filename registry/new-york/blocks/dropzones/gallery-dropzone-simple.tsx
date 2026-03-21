@@ -1,9 +1,16 @@
 'use client';
 
-import { Upload, X, ImageIcon } from 'lucide-react';
+import { Upload, X, Plus } from 'lucide-react';
+import * as React from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useImageDropzone } from '@/hooks/use-image-dropzone';
+
+interface FileWithPreview {
+    id: string;
+    file: File;
+    preview: string;
+}
 
 interface GalleryDropzoneSimpleProps {
     onFilesSelect?: (files: File[]) => void;
@@ -18,55 +25,95 @@ export function GalleryDropzoneSimple({
     maxSize = 10 * 1024 * 1024,
     className,
 }: GalleryDropzoneSimpleProps) {
-    const {
-        files,
-        isDragOver,
-        dragProps,
-        inputRef,
-        addFiles,
-        removeFile,
-        clearAll,
-        hasReachedMax,
-    } = useImageDropzone({
-        maxFiles,
-        maxSize,
-        onFilesChange: onFilesSelect,
-    });
+    const [files, setFiles] = useState<FileWithPreview[]>([]);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const handleFiles = useCallback(
+        (newFiles: FileList) => {
+            const fileArray = Array.from(newFiles);
+            const remainingSlots = maxFiles - files.length;
+            const filesToProcess = fileArray.slice(0, remainingSlots);
+
+            const newFileObjects = filesToProcess
+                .filter(
+                    (file) =>
+                        file.type.startsWith('image/') && file.size <= maxSize,
+                )
+                .map((file) => ({
+                    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                    file,
+                    preview: URL.createObjectURL(file),
+                }));
+
+            const updated = [...files, ...newFileObjects].slice(0, maxFiles);
+            setFiles(updated);
+            onFilesSelect?.(updated.map((f) => f.file));
+        },
+        [files, maxFiles, maxSize, onFilesSelect],
+    );
+
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
+
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
+        },
+        [handleFiles],
+    );
+
+    const handleRemove = useCallback(
+        (id: string) => {
+            const updated = files.filter((f) => f.id !== id);
+            setFiles(updated);
+            onFilesSelect?.(updated.map((f) => f.file));
+        },
+        [files, onFilesSelect],
+    );
+
+    const handleClearAll = useCallback(() => {
+        setFiles([]);
+        onFilesSelect?.([]);
+
+        if (inputRef.current) {
+            inputRef.current.value = '';
+        }
+    }, [onFilesSelect]);
 
     return (
         <div className={cn('space-y-4', className)}>
             <div
+                role="button"
+                tabIndex={0}
+                aria-label="Upload images"
+                onClick={() =>
+                    files.length < maxFiles && inputRef.current?.click()
+                }
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+
+                        if (files.length < maxFiles) {
+inputRef.current?.click();
+}
+                    }
+                }}
+                onDrop={handleDrop}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
                 className={cn(
                     'flex min-h-[160px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors',
                     isDragOver
                         ? 'border-primary bg-muted/50'
                         : 'border-muted-foreground/25 hover:border-muted-foreground/50',
                 )}
-                {...dragProps}
-                onClick={() => inputRef.current?.click()}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        inputRef.current?.click();
-                    }
-                }}
-                tabIndex={0}
-                role="button"
-                aria-label="Upload images"
             >
-                <input
-                    ref={inputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => {
-                        if (e.target.files) {
-                            addFiles(e.target.files);
-                        }
-                    }}
-                    className="sr-only"
-                />
-
                 <div className="flex size-12 items-center justify-center rounded-full bg-muted">
                     <Upload className="size-6 text-muted-foreground" />
                 </div>
@@ -81,6 +128,19 @@ export function GalleryDropzoneSimple({
                 </div>
             </div>
 
+            <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                    if (e.target.files) {
+handleFiles(e.target.files);
+}
+                }}
+                className="sr-only"
+            />
+
             {files.length > 0 && (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -90,13 +150,12 @@ export function GalleryDropzoneSimple({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={clearAll}
+                            onClick={handleClearAll}
                             className="text-muted-foreground"
                         >
                             Clear all
                         </Button>
                     </div>
-
                     <div className="grid grid-cols-3 gap-3">
                         {files.map((file) => (
                             <div
@@ -109,7 +168,7 @@ export function GalleryDropzoneSimple({
                                     className="size-full object-cover"
                                 />
                                 <button
-                                    onClick={() => removeFile(file.id)}
+                                    onClick={() => handleRemove(file.id)}
                                     className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-background/80 opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
                                     aria-label="Remove image"
                                 >
@@ -117,13 +176,12 @@ export function GalleryDropzoneSimple({
                                 </button>
                             </div>
                         ))}
-
-                        {!hasReachedMax && (
+                        {files.length < maxFiles && (
                             <button
                                 onClick={() => inputRef.current?.click()}
                                 className="flex aspect-square flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-muted-foreground/25 text-muted-foreground transition-colors hover:border-muted-foreground/50 hover:bg-muted/50"
                             >
-                                <ImageIcon className="size-5" />
+                                <Plus className="size-5" />
                                 <span className="text-xs">Add</span>
                             </button>
                         )}

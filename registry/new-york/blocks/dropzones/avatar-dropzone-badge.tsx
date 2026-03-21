@@ -1,32 +1,21 @@
 'use client';
 
-import { User, Camera, Check, AlertCircle, Loader2 } from 'lucide-react';
-import * as React from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { AvatarDropzone } from '../../components/dropzone/avatar-dropzone';
 
 interface AvatarDropzoneBadgeProps {
     className?: string;
-    onFileSelect?: (file: File | null) => void;
+    onFileSelect?: (file: File) => void;
     maxSize?: number;
     defaultImage?: string;
     size?: 'sm' | 'md' | 'lg';
+    onUploadStart?: (file: File) => void;
+    onUploadProgress?: (progress: number) => void;
+    onUploadSuccess?: (file: File, response?: unknown) => void;
+    onUploadError?: (error: string, file?: File) => void;
+    onDelete?: (currentImage: string) => void;
+    onDeleteSuccess?: (deletedUrl: string) => void;
+    onDeleteError?: (error: string) => void;
 }
-
-type Status = 'idle' | 'uploading' | 'success' | 'error';
-
-const sizeMap = {
-    sm: { avatar: 'size-12', icon: 'size-4', badge: 'size-4' },
-    md: { avatar: 'size-20', icon: 'size-6', badge: 'size-6' },
-    lg: { avatar: 'size-28', icon: 'size-8', badge: 'size-8' },
-};
 
 export function AvatarDropzoneBadge({
     className,
@@ -34,200 +23,29 @@ export function AvatarDropzoneBadge({
     maxSize = 5 * 1024 * 1024,
     defaultImage,
     size = 'md',
+    onUploadStart,
+    onUploadProgress,
+    onUploadSuccess,
+    onUploadError,
+    onDelete,
+    onDeleteSuccess,
+    onDeleteError,
 }: AvatarDropzoneBadgeProps) {
-    const [isDragOver, setIsDragOver] = React.useState(false);
-    const [preview, setPreview] = React.useState<string | null>(
-        defaultImage || null,
-    );
-    const [status, setStatus] = React.useState<Status>('idle');
-    const [progress, setProgress] = React.useState(0);
-    const [error, setError] = React.useState<string | null>(null);
-    const inputRef = React.useRef<HTMLInputElement>(null);
-
-    const sizes = sizeMap[size];
-
-    const simulateUpload = React.useCallback(() => {
-        setStatus('uploading');
-        setProgress(0);
-        setError(null);
-        const interval = setInterval(() => {
-            setProgress((prev) => {
-                if (prev >= 100) {
-                    clearInterval(interval);
-                    setStatus('success');
-
-                    return 100;
-                }
-
-                return prev + 15;
-            });
-        }, 120);
-    }, []);
-
-    const handleFile = React.useCallback(
-        (file: File) => {
-            setError(null);
-
-            if (!file.type.startsWith('image/')) {
-                setError('Invalid file type');
-                setStatus('error');
-
-                return;
-            }
-
-            if (file.size > maxSize) {
-                setError('File too large');
-                setStatus('error');
-
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setPreview(e.target?.result as string);
-                simulateUpload();
-                onFileSelect?.(file);
-            };
-            reader.readAsDataURL(file);
-        },
-        [maxSize, onFileSelect, simulateUpload],
-    );
-
-    const handleDrop = React.useCallback(
-        (e: React.DragEvent) => {
-            e.preventDefault();
-            setIsDragOver(false);
-            const file = e.dataTransfer.files[0];
-
-            if (file) {
-                handleFile(file);
-            }
-        },
-        [handleFile],
-    );
-
-    const statusBadge = () => {
-        if (status === 'uploading') {
-            return (
-                <Badge
-                    className={cn(sizes.badge, 'rounded-full bg-primary p-0')}
-                >
-                    <Loader2 className="size-3 animate-spin text-primary-foreground" />
-                </Badge>
-            );
-        }
-
-        if (status === 'success') {
-            return (
-                <Badge
-                    className={cn(sizes.badge, 'bg-success rounded-full p-0')}
-                >
-                    <Check className="text-success-foreground size-3" />
-                </Badge>
-            );
-        }
-
-        if (status === 'error') {
-            return (
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Badge
-                            className={cn(
-                                sizes.badge,
-                                'cursor-help rounded-full bg-destructive p-0',
-                            )}
-                        >
-                            <AlertCircle className="size-3 text-white" />
-                        </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>{error || 'Upload failed'}</TooltipContent>
-                </Tooltip>
-            );
-        }
-
-        return null;
-    };
-
     return (
-        <div className={cn('flex flex-col items-center gap-3', className)}>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div
-                        role="button"
-                        tabIndex={0}
-                        aria-label="Upload avatar"
-                        onClick={() => inputRef.current?.click()}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                inputRef.current?.click();
-                            }
-                        }}
-                        onDrop={handleDrop}
-                        onDragOver={(e) => {
-                            e.preventDefault();
-                            setIsDragOver(true);
-                        }}
-                        onDragLeave={(e) => {
-                            e.preventDefault();
-                            setIsDragOver(false);
-                        }}
-                        className={cn(
-                            'group relative cursor-pointer rounded-full transition-all',
-                            isDragOver &&
-                                'ring-2 ring-primary ring-offset-2 ring-offset-background',
-                        )}
-                    >
-                        <Avatar
-                            className={cn(
-                                sizes.avatar,
-                                'border-2 border-border transition-all group-hover:border-primary',
-                            )}
-                        >
-                            {preview ? (
-                                <AvatarImage
-                                    src={preview}
-                                    alt="Avatar"
-                                    className="object-cover"
-                                />
-                            ) : (
-                                <AvatarFallback className="bg-muted">
-                                    <User
-                                        className={cn(
-                                            sizes.icon,
-                                            'text-muted-foreground',
-                                        )}
-                                    />
-                                </AvatarFallback>
-                            )}
-                        </Avatar>
-
-                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/50 opacity-0 transition-opacity group-hover:opacity-100">
-                            <Camera className="size-5 text-background" />
-                        </div>
-
-                        <div className="absolute -right-1 -bottom-1">
-                            {statusBadge()}
-                        </div>
-                    </div>
-                </TooltipTrigger>
-                <TooltipContent>Click to upload photo</TooltipContent>
-            </Tooltip>
-
-            {status === 'uploading' && (
-                <Progress value={progress} className="h-1 w-20" />
-            )}
-
-            <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                        handleFile(e.target.files[0]);
-                    }
-                }}
-                className="sr-only"
-            />
-        </div>
+        <AvatarDropzone
+            variant="badge"
+            size={size}
+            onFileSelect={onFileSelect}
+            maxSize={maxSize}
+            defaultImage={defaultImage}
+            onUploadStart={onUploadStart}
+            onUploadProgress={onUploadProgress}
+            onUploadSuccess={onUploadSuccess}
+            onUploadError={onUploadError}
+            onDelete={onDelete}
+            onDeleteSuccess={onDeleteSuccess}
+            onDeleteError={onDeleteError}
+            className={className}
+        />
     );
 }

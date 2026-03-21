@@ -2,6 +2,7 @@
 
 import { ImageIcon, Upload, X, Check, Images, Trash2 } from 'lucide-react';
 import * as React from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,57 +14,37 @@ import {
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { useDragOver } from '@/hooks/use-drag-over';
 
-interface ImageFile {
+interface FileWithPreview {
     id: string;
     file: File;
     preview: string;
     progress: number;
-    status: 'uploading' | 'success' | 'error';
+    status: 'uploading' | 'complete';
     aspectRatio: number;
 }
 
 interface GalleryDropzoneMasonryProps {
-    className?: string;
-    onFilesChange?: (files: File[]) => void;
+    onFilesSelect?: (files: File[]) => void;
     maxFiles?: number;
     maxSize?: number;
+    className?: string;
 }
 
 export function GalleryDropzoneMasonry({
-    className,
-    onFilesChange,
+    onFilesSelect,
     maxFiles = 9,
     maxSize = 10 * 1024 * 1024,
+    className,
 }: GalleryDropzoneMasonryProps) {
-    const [images, setImages] = React.useState<ImageFile[]>([]);
-    const inputRef = React.useRef<HTMLInputElement>(null);
+    const [files, setFiles] = useState<FileWithPreview[]>([]);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    const simulateUpload = React.useCallback((imageId: string) => {
-        const interval = setInterval(() => {
-            setImages((prev) =>
-                prev.map((img) => {
-                    if (img.id !== imageId) {
-                        return img;
-                    }
-
-                    if (img.progress >= 100) {
-                        clearInterval(interval);
-
-                        return { ...img, progress: 100, status: 'success' };
-                    }
-
-                    return { ...img, progress: img.progress + 15 };
-                }),
-            );
-        }, 120);
-    }, []);
-
-    const processFiles = React.useCallback(
-        (files: FileList | File[]) => {
-            const fileArray = Array.from(files);
-            const remainingSlots = maxFiles - images.length;
+    const handleFiles = useCallback(
+        (newFiles: FileList) => {
+            const fileArray = Array.from(newFiles);
+            const remainingSlots = maxFiles - files.length;
             const filesToProcess = fileArray.slice(0, remainingSlots);
 
             filesToProcess.forEach((file) => {
@@ -71,63 +52,102 @@ export function GalleryDropzoneMasonry({
                     return;
                 }
 
-                const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
                 const reader = new FileReader();
 
                 reader.onload = (e) => {
                     const img = new Image();
-                    img.crossOrigin = 'anonymous';
                     img.onload = () => {
                         const aspectRatio = img.width / img.height;
-                        setImages((prev) => [
+                        setFiles((prev) => [
                             ...prev,
                             {
                                 id,
                                 file,
                                 preview: e.target?.result as string,
                                 progress: 0,
-                                status: 'uploading',
+                                status: 'uploading' as const,
                                 aspectRatio,
                             },
                         ]);
-                        setTimeout(() => simulateUpload(id), 50);
                     };
                     img.src = e.target?.result as string;
                 };
                 reader.readAsDataURL(file);
             });
         },
-        [images.length, maxFiles, maxSize, simulateUpload],
+        [files.length, maxFiles, maxSize],
     );
 
     React.useEffect(() => {
-        onFilesChange?.(
-            images.filter((i) => i.status === 'success').map((i) => i.file),
-        );
-    }, [images, onFilesChange]);
+        const uploadFiles = files.filter((f) => f.status === 'uploading');
 
-    const handleDrop = React.useCallback(
-        (droppedFiles: FileList) => {
-            processFiles(droppedFiles);
+        if (uploadFiles.length === 0) {
+return;
+}
+
+        uploadFiles.forEach((file) => {
+            const interval = setInterval(() => {
+                setFiles((prev) =>
+                    prev.map((f) => {
+                        if (f.id !== file.id) {
+return f;
+}
+
+                        const newProgress = f.progress + Math.random() * 15 + 5;
+
+                        if (newProgress >= 100) {
+                            clearInterval(interval);
+
+                            return {
+                                ...f,
+                                progress: 100,
+                                status: 'complete' as const,
+                            };
+                        }
+
+                        return { ...f, progress: newProgress };
+                    }),
+                );
+            }, 120);
+        });
+
+        return () => {
+            uploadFiles.forEach(() => {});
+        };
+    }, [files.length]);
+
+    React.useEffect(() => {
+        onFilesSelect?.(
+            files.filter((i) => i.status === 'complete').map((i) => i.file),
+        );
+    }, [files, onFilesSelect]);
+
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
+
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
         },
-        [processFiles],
+        [handleFiles],
     );
 
-    const { isDragOver, dragProps } = useDragOver({ onDrop: handleDrop });
-
-    const handleRemove = React.useCallback((id: string) => {
-        setImages((prev) => prev.filter((img) => img.id !== id));
+    const handleRemove = useCallback((id: string) => {
+        setFiles((prev) => prev.filter((img) => img.id !== id));
     }, []);
 
-    const handleClearAll = React.useCallback(() => {
-        setImages([]);
-        onFilesChange?.([]);
-    }, [onFilesChange]);
+    const handleClearAll = useCallback(() => {
+        setFiles([]);
+        onFilesSelect?.([]);
+    }, [onFilesSelect]);
 
-    const successCount = images.filter((i) => i.status === 'success').length;
+    const successCount = files.filter((i) => i.status === 'complete').length;
 
-    const columns: ImageFile[][] = [[], [], []];
-    images.forEach((img, idx) => {
+    const columns: FileWithPreview[][] = [[], [], []];
+    files.forEach((img, idx) => {
         columns[idx % 3].push(img);
     });
 
@@ -141,12 +161,12 @@ export function GalleryDropzoneMasonry({
                             Photo Gallery
                         </CardTitle>
                         <CardDescription>
-                            {images.length === 0
+                            {files.length === 0
                                 ? `Upload up to ${maxFiles} images`
-                                : `${successCount} of ${images.length} uploaded`}
+                                : `${successCount} of ${files.length} uploaded`}
                         </CardDescription>
                     </div>
-                    {images.length > 0 && (
+                    {files.length > 0 && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -165,24 +185,31 @@ export function GalleryDropzoneMasonry({
                     role="button"
                     tabIndex={0}
                     aria-label="Upload images"
-                    {...dragProps}
                     onClick={() =>
-                        images.length < maxFiles && inputRef.current?.click()
+                        files.length < maxFiles && inputRef.current?.click()
                     }
-                    onKeyDown={(e) =>
-                        (e.key === 'Enter' || e.key === ' ') &&
-                        images.length < maxFiles &&
-                        inputRef.current?.click()
-                    }
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            if (files.length < maxFiles) {
+inputRef.current?.click();
+}
+                        }
+                    }}
+                    onDrop={handleDrop}
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragOver(true);
+                    }}
+                    onDragLeave={() => setIsDragOver(false)}
                     className={cn(
                         'relative min-h-[200px] rounded-lg border-2 border-dashed p-4 transition-all',
-                        images.length < maxFiles && 'cursor-pointer',
+                        files.length < maxFiles && 'cursor-pointer',
                         isDragOver
                             ? 'border-primary bg-primary/5'
                             : 'border-border hover:border-primary/30',
                     )}
                 >
-                    {images.length === 0 ? (
+                    {files.length === 0 ? (
                         <div className="flex h-[180px] flex-col items-center justify-center gap-3">
                             <div className="rounded-full bg-muted p-4">
                                 <ImageIcon className="size-8 text-muted-foreground" />
@@ -205,46 +232,46 @@ export function GalleryDropzoneMasonry({
                                     key={colIdx}
                                     className="flex flex-1 flex-col gap-3"
                                 >
-                                    {col.map((image) => (
+                                    {col.map((file) => (
                                         <div
-                                            key={image.id}
+                                            key={file.id}
                                             className="group relative overflow-hidden rounded-md border bg-muted"
                                             style={{
-                                                aspectRatio: image.aspectRatio,
+                                                aspectRatio:
+                                                    file.aspectRatio.toString(),
                                             }}
                                         >
                                             <img
-                                                src={image.preview}
+                                                src={file.preview}
                                                 alt=""
                                                 className="h-full w-full object-cover"
                                             />
 
-                                            {image.status === 'uploading' && (
+                                            {file.status === 'uploading' && (
                                                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60">
                                                     <span className="mb-1 text-sm font-medium">
                                                         {Math.round(
-                                                            image.progress,
+                                                            file.progress,
                                                         )}
                                                         %
                                                     </span>
                                                     <Progress
-                                                        value={image.progress}
+                                                        value={file.progress}
                                                         className="h-1 w-2/3"
                                                     />
                                                 </div>
                                             )}
 
-                                            {image.status === 'success' && (
+                                            {file.status === 'complete' && (
                                                 <Badge className="bg-success/90 text-success-foreground absolute top-1.5 right-1.5 gap-1">
                                                     <Check className="size-3" />
                                                 </Badge>
                                             )}
 
                                             <button
-                                                type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleRemove(image.id);
+                                                    handleRemove(file.id);
                                                 }}
                                                 className="absolute top-1.5 left-1.5 flex size-6 items-center justify-center rounded-full bg-foreground/80 text-background opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive"
                                                 aria-label="Remove"
@@ -257,14 +284,6 @@ export function GalleryDropzoneMasonry({
                             ))}
                         </div>
                     )}
-
-                    {isDragOver && (
-                        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-primary/10">
-                            <div className="rounded-full bg-primary p-4">
-                                <Upload className="size-8 text-primary-foreground" />
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 <input
@@ -274,8 +293,8 @@ export function GalleryDropzoneMasonry({
                     multiple
                     onChange={(e) => {
                         if (e.target.files) {
-                            processFiles(e.target.files);
-                        }
+handleFiles(e.target.files);
+}
                     }}
                     className="sr-only"
                 />

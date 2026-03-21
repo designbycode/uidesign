@@ -14,10 +14,10 @@ import {
     CardTitle,
     CardDescription,
 } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 import type { FileWithPreview } from '@/hooks/types';
 import { useImageDropzone } from '@/hooks/use-image-dropzone';
 import { useSortableFiles } from '@/hooks/use-sortable-files';
+import { cn } from '@/lib/utils';
 
 interface SortableAvatarRowItemProps {
     avatar: FileWithPreview;

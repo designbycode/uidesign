@@ -2,9 +2,9 @@
 
 import { Plus, X, Loader2 } from 'lucide-react';
 import * as React from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useImageDropzone } from '@/hooks/use-image-dropzone';
 
 interface FileWithStatus {
     file: File;
@@ -26,22 +26,34 @@ export function GalleryDropzonePills({
     maxSize = 10 * 1024 * 1024,
     className,
 }: GalleryDropzonePillsProps) {
-    const [files, setFiles] = React.useState<FileWithStatus[]>([]);
-    const inputRef = React.useRef<HTMLInputElement>(null);
+    const [files, setFiles] = useState<FileWithStatus[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const intervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-    const { isDragOver, dragProps } = useImageDropzone({
-        maxFiles,
-        maxSize,
-        onFilesChange: onFilesSelect,
-    });
+    useEffect(() => {
+        return () => {
+            intervalsRef.current.forEach((timeout) => clearTimeout(timeout));
+        };
+    }, []);
 
-    const handleFiles = React.useCallback(
+    const clearFileTimeout = useCallback((id: string) => {
+        const timeout = intervalsRef.current.get(id);
+
+        if (timeout) {
+            clearTimeout(timeout);
+            intervalsRef.current.delete(id);
+        }
+    }, []);
+
+    const handleFiles = useCallback(
         (newFiles: FileList) => {
             const fileArray = Array.from(newFiles);
-            const remainingSlots = maxFiles - files.length;
+            const currentFileCount = files.length;
+            const remainingSlots = maxFiles - currentFileCount;
             const filesToProcess = fileArray.slice(0, remainingSlots);
 
-            const newFileObjects: FileWithStatus[] = filesToProcess
+            const newFileObjects = filesToProcess
                 .filter(
                     (file) =>
                         file.type.startsWith('image/') && file.size <= maxSize,
@@ -49,26 +61,37 @@ export function GalleryDropzonePills({
                 .map((file) => ({
                     file,
                     preview: URL.createObjectURL(file),
-                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`,
                     status: 'uploading' as const,
                 }));
+
+            if (newFileObjects.length === 0) {
+return;
+}
 
             const updated = [...files, ...newFileObjects].slice(0, maxFiles);
             setFiles(updated);
 
             newFileObjects.forEach((fileObj) => {
-                setTimeout(
-                    () => {
-                        setFiles((prev) =>
-                            prev.map((f) =>
-                                f.id === fileObj.id
-                                    ? { ...f, status: 'complete' }
-                                    : f,
-                            ),
+                const delay = 800 + Math.random() * 800;
+                const timeoutId = setTimeout(() => {
+                    setFiles((prev) => {
+                        const exists = prev.some((f) => f.id === fileObj.id);
+
+                        if (!exists) {
+return prev;
+}
+
+                        return prev.map((f) =>
+                            f.id === fileObj.id
+                                ? { ...f, status: 'complete' as const }
+                                : f,
                         );
-                    },
-                    800 + Math.random() * 800,
-                );
+                    });
+                    intervalsRef.current.delete(fileObj.id);
+                }, delay);
+
+                intervalsRef.current.set(fileObj.id, timeoutId);
             });
 
             onFilesSelect?.(updated.map((f) => f.file));
@@ -76,23 +99,48 @@ export function GalleryDropzonePills({
         [files, maxFiles, maxSize, onFilesSelect],
     );
 
-    const removeFile = React.useCallback(
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragging(false);
+
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
+        },
+        [handleFiles],
+    );
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    }, []);
+
+    const removeFile = useCallback(
         (id: string) => {
+            clearFileTimeout(id);
             const updated = files.filter((f) => f.id !== id);
             setFiles(updated);
             onFilesSelect?.(updated.map((f) => f.file));
         },
-        [files, onFilesSelect],
+        [files, onFilesSelect, clearFileTimeout],
     );
 
     return (
         <div
             className={cn(
                 'flex min-h-[48px] flex-wrap items-center gap-2 rounded-lg border p-3 transition-colors',
-                isDragOver && 'border-primary bg-muted/50',
+                isDragging && 'border-primary bg-muted/50',
                 className,
             )}
-            {...dragProps}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
         >
             <input
                 ref={inputRef}

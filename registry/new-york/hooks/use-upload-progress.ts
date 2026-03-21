@@ -35,10 +35,10 @@ export function useUploadProgress(options: UseUploadProgressOptions = {}) {
     const simulateUpload = useCallback(
         (
             id: string,
-            setProgress: (updater: (prev: number) => number) => void,
+            setProgress?: (updater: (prev: number) => number) => void,
         ) => {
             const interval = setInterval(() => {
-                setProgress((prev) => {
+                setProgress?.((prev) => {
                     const nextProgress =
                         prev + Math.random() * incrementMax + incrementMin;
 

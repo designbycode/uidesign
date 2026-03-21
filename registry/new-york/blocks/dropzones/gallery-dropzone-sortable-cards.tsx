@@ -8,9 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { FileWithPreview } from '@/hooks/types';
-import { useImageDropzone } from '@/hooks/use-image-dropzone';
-import { useSortableFiles } from '@/hooks/use-sortable-files';
+
+interface FileWithPreview {
+    id: string;
+    file: File;
+    preview: string;
+}
 
 interface SortableCardProps {
     image: FileWithPreview;
@@ -127,50 +130,65 @@ export function GalleryDropzoneSortableCards({
     enableReorder = true,
 }: GalleryDropzoneSortableCardsProps) {
     const [primaryId, setPrimaryId] = React.useState<string | null>(null);
+    const [files, setFiles] = React.useState<FileWithPreview[]>([]);
+    const [isDragOver, setIsDragOver] = React.useState(false);
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
-    const {
-        files,
-        isDragOver,
-        dragProps,
-        inputRef,
-        addFiles,
-        removeFile,
-        clearAll,
-    } = useImageDropzone({
-        maxFiles,
-        maxSize,
-        onFilesChange: onFilesSelect,
-    });
+    const handleFiles = React.useCallback(
+        (newFiles: FileList) => {
+            const validFiles = Array.from(newFiles)
+                .filter(
+                    (file) =>
+                        file.type.startsWith('image/') && file.size <= maxSize,
+                )
+                .slice(0, maxFiles - files.length);
 
-    const { handleDragEnd } = useSortableFiles({
-        items: files,
-        onReorderFiles: onReorder,
-        getFile: (item) => item.file,
-    });
+            const newFileObjects = validFiles.map((file) => ({
+                file,
+                preview: URL.createObjectURL(file),
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            }));
 
-    React.useEffect(() => {
-        if (!primaryId && files.length > 0) {
-            setPrimaryId(files[0].id);
-            onPrimaryChange?.(files[0].file);
-        }
-    }, [files, primaryId, onPrimaryChange]);
+            const updated = [...files, ...newFileObjects].slice(0, maxFiles);
+            setFiles(updated);
+            onFilesSelect?.(updated.map((f) => f.file));
+
+            if (!primaryId && updated.length > 0) {
+                setPrimaryId(updated[0].id);
+                onPrimaryChange?.(updated[0].file);
+            }
+        },
+        [files, maxFiles, maxSize, onFilesSelect, primaryId, onPrimaryChange],
+    );
+
+    const handleDrop = React.useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
+
+            if (e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
+        },
+        [handleFiles],
+    );
 
     const handleRemove = React.useCallback(
         (id: string) => {
-            removeFile(id);
+            const updated = files.filter((f) => f.id !== id);
+            setFiles(updated);
+            onFilesSelect?.(updated.map((f) => f.file));
 
             if (primaryId === id) {
-                const remainingFiles = files.filter((f) => f.id !== id);
-
-                if (remainingFiles.length > 0) {
-                    setPrimaryId(remainingFiles[0].id);
-                    onPrimaryChange?.(remainingFiles[0].file);
+                if (updated.length > 0) {
+                    setPrimaryId(updated[0].id);
+                    onPrimaryChange?.(updated[0].file);
                 } else {
                     setPrimaryId(null);
                 }
             }
         },
-        [files, primaryId, removeFile, onPrimaryChange],
+        [files, primaryId, onFilesSelect, onPrimaryChange],
     );
 
     const setPrimary = React.useCallback(
@@ -183,6 +201,42 @@ export function GalleryDropzoneSortableCards({
             }
         },
         [files, onPrimaryChange],
+    );
+
+    const clearAll = React.useCallback(() => {
+        setFiles([]);
+        onFilesSelect?.([]);
+        setPrimaryId(null);
+
+        if (inputRef.current) {
+            inputRef.current.value = '';
+        }
+    }, [onFilesSelect]);
+
+    const handleDragEnd = React.useCallback(
+        (event: { canceled: boolean; operation?: { source?: unknown } }) => {
+            if (event.canceled || !event.operation?.source) {
+return;
+}
+
+            const source = event.operation.source as {
+                id?: string;
+                index?: number;
+            };
+
+            if (source.id && typeof source.index === 'number') {
+                const sourceIndex = files.findIndex((f) => f.id === source.id);
+
+                if (sourceIndex !== -1 && sourceIndex !== source.index) {
+                    const newFiles = [...files];
+                    const [removed] = newFiles.splice(sourceIndex, 1);
+                    newFiles.splice(source.index, 0, removed);
+                    setFiles(newFiles);
+                    onReorder?.(newFiles.map((f) => f.file));
+                }
+            }
+        },
+        [files, onReorder],
     );
 
     const cardsContent = (
@@ -210,7 +264,12 @@ export function GalleryDropzoneSortableCards({
                         ? 'border-primary bg-primary/5'
                         : 'border-muted-foreground/25 hover:border-muted-foreground/50',
                 )}
-                {...dragProps}
+                onDrop={handleDrop}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
                 onClick={() => inputRef.current?.click()}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -240,7 +299,7 @@ export function GalleryDropzoneSortableCards({
                 multiple
                 onChange={(e) => {
                     if (e.target.files) {
-                        addFiles(e.target.files);
+                        handleFiles(e.target.files);
                     }
                 }}
                 className="sr-only"

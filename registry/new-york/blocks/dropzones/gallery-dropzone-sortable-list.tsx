@@ -16,16 +16,19 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import type { FileWithPreview } from '@/hooks/types';
-import { useImageDropzone } from '@/hooks/use-image-dropzone';
-import { useSortableFiles } from '@/hooks/use-sortable-files';
+
+interface FileWithPreview {
+    id: string;
+    file: File;
+    preview: string;
+    status: 'ready' | 'uploading' | 'success' | 'error';
+}
 
 interface SortableListItemProps {
     image: FileWithPreview;
     index: number;
     onRemove: (id: string) => void;
     showHandle?: boolean;
-    status?: 'ready' | 'uploading' | 'success' | 'error';
 }
 
 function SortableListItem({
@@ -33,7 +36,6 @@ function SortableListItem({
     index,
     onRemove,
     showHandle,
-    status = 'ready',
 }: SortableListItemProps) {
     const { ref, handleRef, isDragging } = useSortable({
         id: image.id,
@@ -99,13 +101,13 @@ function SortableListItem({
             </div>
 
             <div className="flex items-center gap-2">
-                {status === 'success' && (
+                {image.status === 'success' && (
                     <Badge variant="secondary" className="text-success gap-1">
                         <Check className="size-3" />
                         Done
                     </Badge>
                 )}
-                {status === 'error' && (
+                {image.status === 'error' && (
                     <Badge variant="destructive" className="gap-1">
                         <AlertCircle className="size-3" />
                         Error
@@ -142,25 +144,103 @@ export function GalleryDropzoneSortableList({
     maxSize = 10 * 1024 * 1024,
     enableReorder = true,
 }: GalleryDropzoneSortableListProps) {
-    const {
-        files,
-        isDragOver,
-        dragProps,
-        inputRef,
-        addFiles,
-        removeFile,
-        clearAll,
-    } = useImageDropzone({
-        maxFiles,
-        maxSize,
-        onFilesChange,
-    });
+    const [files, setFiles] = React.useState<FileWithPreview[]>([]);
+    const [isDragOver, setIsDragOver] = React.useState(false);
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
-    const { handleDragEnd } = useSortableFiles({
-        items: files,
-        onReorderFiles: onReorder,
-        getFile: (item) => item.file,
-    });
+    const handleFiles = React.useCallback(
+        (newFiles: FileList) => {
+            const validFiles = Array.from(newFiles)
+                .filter(
+                    (file) =>
+                        file.type.startsWith('image/') && file.size <= maxSize,
+                )
+                .slice(0, maxFiles - files.length);
+
+            const newFileObjects = validFiles.map((file) => ({
+                file,
+                preview: URL.createObjectURL(file),
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                status: 'ready' as const,
+            }));
+
+            newFileObjects.forEach((fileObj) => {
+                setTimeout(
+                    () => {
+                        setFiles((prev) =>
+                            prev.map((f) =>
+                                f.id === fileObj.id
+                                    ? { ...f, status: 'success' }
+                                    : f,
+                            ),
+                        );
+                    },
+                    500 + Math.random() * 500,
+                );
+            });
+
+            const updated = [...files, ...newFileObjects].slice(0, maxFiles);
+            setFiles(updated);
+            onFilesChange?.(updated.map((f) => f.file));
+        },
+        [files, maxFiles, maxSize, onFilesChange],
+    );
+
+    const handleDrop = React.useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
+
+            if (e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
+        },
+        [handleFiles],
+    );
+
+    const removeFile = React.useCallback(
+        (id: string) => {
+            const updated = files.filter((f) => f.id !== id);
+            setFiles(updated);
+            onFilesChange?.(updated.map((f) => f.file));
+        },
+        [files, onFilesChange],
+    );
+
+    const clearAll = React.useCallback(() => {
+        setFiles([]);
+        onFilesChange?.([]);
+
+        if (inputRef.current) {
+            inputRef.current.value = '';
+        }
+    }, [onFilesChange]);
+
+    const handleDragEnd = React.useCallback(
+        (event: { canceled: boolean; operation?: { source?: unknown } }) => {
+            if (event.canceled || !event.operation?.source) {
+                return;
+            }
+
+            const source = event.operation.source as {
+                id?: string;
+                index?: number;
+            };
+
+            if (source.id && typeof source.index === 'number') {
+                const sourceIndex = files.findIndex((f) => f.id === source.id);
+
+                if (sourceIndex !== -1 && sourceIndex !== source.index) {
+                    const newFiles = [...files];
+                    const [removed] = newFiles.splice(sourceIndex, 1);
+                    newFiles.splice(source.index, 0, removed);
+                    setFiles(newFiles);
+                    onReorder?.(newFiles.map((f) => f.file));
+                }
+            }
+        },
+        [files, onReorder],
+    );
 
     const listContent = (
         <div className="space-y-1">
@@ -189,7 +269,12 @@ export function GalleryDropzoneSortableList({
                 role="button"
                 tabIndex={0}
                 aria-label="Upload images"
-                {...dragProps}
+                onDrop={handleDrop}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
                 onClick={() => inputRef.current?.click()}
                 onKeyDown={(e) =>
                     (e.key === 'Enter' || e.key === ' ') &&
@@ -223,7 +308,7 @@ export function GalleryDropzoneSortableList({
                 multiple
                 onChange={(e) => {
                     if (e.target.files) {
-                        addFiles(e.target.files);
+                        handleFiles(e.target.files);
                     }
                 }}
                 className="sr-only"
@@ -250,7 +335,7 @@ export function GalleryDropzoneSortableList({
                         </Button>
                     </div>
 
-                    <ScrollArea className="max-h-[280px]">
+                    <ScrollArea className="max-h-70 overflow-y-hidden">
                         {enableReorder ? (
                             <DragDropProvider onDragEnd={handleDragEnd}>
                                 {listContent}

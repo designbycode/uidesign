@@ -2,7 +2,7 @@
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "auth-card",
   "title": "Auth Card",
-  "description": "A card component for authentication with email and password fields.",
+  "description": "A card-styled auth card component.",
   "registryDependencies": [
     "button",
     "card",
@@ -13,8 +13,8 @@
     {
       "path": "registry/new-york/cards/auth-card.tsx",
       "content": "import { Lock} from 'lucide-react'\nimport { Button } from '@/components/ui/button';\nimport {\n    Card,\n    CardContent,\n    CardDescription,\n    CardFooter,\n    CardHeader,\n    CardTitle,\n} from '@/components/ui/card';\nimport { Input } from '@/components/ui/input';\nimport { Label } from '@/components/ui/label';\n\nexport default function AuthCard() {\n    return (\n        <Card className=\"shadow-xl\">\n            <CardHeader className=\"items-center text-center\">\n                <div className=\"mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-foreground\">\n                    <Lock className=\"h-6 w-6 text-background\" />\n                </div>\n                <CardTitle>Welcome back</CardTitle>\n                <CardDescription>Sign in to your account</CardDescription>\n            </CardHeader>\n            <CardContent className=\"space-y-4\">\n                <div className=\"space-y-1.5\">\n                    <Label htmlFor=\"email\">Email</Label>\n                    <Input\n                        id=\"email\"\n                        type=\"email\"\n                        placeholder=\"you@example.com\"\n                    />\n                </div>\n                <div className=\"space-y-1.5\">\n                    <Label htmlFor=\"password\">Password</Label>\n                    <Input\n                        id=\"password\"\n                        type=\"password\"\n                        placeholder=\"••••••••\"\n                    />\n                </div>\n                <div className=\"flex items-center justify-between text-sm\">\n                    <div className=\"flex items-center gap-2\">\n                        <input\n                            type=\"checkbox\"\n                            id=\"remember\"\n                            className=\"rounded\"\n                        />\n                        <label\n                            htmlFor=\"remember\"\n                            className=\"text-muted-foreground\"\n                        >\n                            Remember me\n                        </label>\n                    </div>\n                    <span className=\"cursor-pointer text-primary hover:underline\">\n                        Forgot password?\n                    </span>\n                </div>\n            </CardContent>\n            <CardFooter className=\"flex-col gap-3\">\n                <Button className=\"w-full\">Sign in</Button>\n                <p className=\"text-center text-xs text-muted-foreground\">\n                    Don't have an account?{' '}\n                    <span className=\"cursor-pointer text-primary hover:underline\">\n                        Sign up free\n                    </span>\n                </p>\n            </CardFooter>\n        </Card>\n    );\n}\n",
-      "type": "registry:component"
+      "type": "registry:block"
     }
   ],
-  "type": "registry:component"
+  "type": "registry:block"
 }

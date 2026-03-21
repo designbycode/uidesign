@@ -2,164 +2,139 @@
 
 import { ImageIcon, Upload, X, Check, FileWarning, Trash2 } from 'lucide-react';
 import * as React from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { useUploadProgress } from '@/hooks/use-upload-progress';
 
-interface ImageFileWithProgress {
+interface FileWithStatus {
     id: string;
     file: File;
     preview: string;
     progress: number;
-    status: 'ready' | 'uploading' | 'success' | 'error';
+    status: 'uploading' | 'complete' | 'error';
     error?: string;
 }
 
 interface GalleryDropzoneListProps {
-    className?: string;
-    onFilesChange?: (files: File[]) => void;
+    onFilesSelect?: (files: File[]) => void;
     maxFiles?: number;
     maxSize?: number;
+    className?: string;
 }
 
 export function GalleryDropzoneList({
-    className,
-    onFilesChange,
+    onFilesSelect,
     maxFiles = 10,
     maxSize = 10 * 1024 * 1024,
+    className,
 }: GalleryDropzoneListProps) {
-    const [images, setImages] = React.useState<ImageFileWithProgress[]>([]);
-    const inputRef = React.useRef<HTMLInputElement>(null);
+    const [files, setFiles] = useState<FileWithStatus[]>([]);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    const { simulateUpload, cancelAll } = useUploadProgress({});
-
-    const addFiles = React.useCallback(
-        (files: FileList | File[]) => {
-            const fileArray = Array.from(files);
-            const remainingSlots = maxFiles - images.length;
+    const handleFiles = useCallback(
+        (newFiles: FileList) => {
+            const fileArray = Array.from(newFiles);
+            const remainingSlots = maxFiles - files.length;
             const filesToProcess = fileArray.slice(0, remainingSlots);
 
-            const newImages: ImageFileWithProgress[] = filesToProcess.map(
-                (file) => {
-                    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
+            const newFileObjects = filesToProcess
+                .filter((file) => {
                     if (!file.type.startsWith('image/')) {
-                        return {
-                            id,
-                            file,
-                            preview: '',
-                            progress: 0,
-                            status: 'error' as const,
-                            error: 'Not an image',
-                        };
-                    }
+return false;
+}
 
                     if (file.size > maxSize) {
-                        return {
-                            id,
-                            file,
-                            preview: '',
-                            progress: 0,
-                            status: 'error' as const,
-                            error: 'File too large',
-                        };
-                    }
+return false;
+}
 
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        setImages((prev) =>
-                            prev.map((img) =>
-                                img.id === id
-                                    ? {
-                                          ...img,
-                                          preview: e.target?.result as string,
-                                      }
-                                    : img,
-                            ),
-                        );
-                    };
-                    reader.readAsDataURL(file);
+                    return true;
+                })
+                .map((file) => ({
+                    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                    file,
+                    preview: URL.createObjectURL(file),
+                    progress: 0,
+                    status: 'uploading' as const,
+                }));
 
-                    return {
-                        id,
-                        file,
-                        preview: '',
-                        progress: 0,
-                        status: 'uploading' as const,
-                    };
-                },
-            );
+            const updated = [...files, ...newFileObjects].slice(0, maxFiles);
+            setFiles(updated);
 
-            setImages((prev) => [...prev, ...newImages]);
-            newImages.forEach((img) => {
-                if (img.status !== 'error') {
-                    setTimeout(() => {
-                        simulateUpload(img.id, (setProgress) => {
-                            setImages((prev) =>
-                                prev.map((image) => {
-                                    if (image.id !== img.id) {
-                                        return image;
-                                    }
+            newFileObjects.forEach((fileObj) => {
+                const interval = setInterval(() => {
+                    setFiles((prev) =>
+                        prev.map((f) => {
+                            if (f.id !== fileObj.id) {
+return f;
+}
 
-                                    return setProgress(
-                                        image.progress >= 100
-                                            ? 100
-                                            : image.progress,
-                                    );
-                                }),
-                            );
-                        });
-                    }, 50);
-                }
+                            const newProgress =
+                                f.progress + Math.random() * 20 + 5;
+
+                            if (newProgress >= 100) {
+                                clearInterval(interval);
+
+                                return {
+                                    ...f,
+                                    progress: 100,
+                                    status: 'complete' as const,
+                                };
+                            }
+
+                            return { ...f, progress: newProgress };
+                        }),
+                    );
+                }, 100);
             });
 
-            onFilesChange?.(
-                [...images, ...newImages]
-                    .filter((i) => i.status !== 'error')
-                    .map((i) => i.file),
-            );
+            onFilesSelect?.(updated.map((f) => f.file));
         },
-        [images, maxFiles, maxSize, onFilesChange, simulateUpload],
+        [files, maxFiles, maxSize, onFilesSelect],
     );
 
-    const handleRemove = React.useCallback(
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
+
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
+        },
+        [handleFiles],
+    );
+
+    const handleRemove = useCallback(
         (id: string) => {
-            setImages((prev) => {
-                const updated = prev.filter((img) => img.id !== id);
-                onFilesChange?.(
-                    updated
-                        .filter((i) => i.status !== 'error')
-                        .map((i) => i.file),
-                );
-
-                return updated;
-            });
+            const updated = files.filter((f) => f.id !== id);
+            setFiles(updated);
+            onFilesSelect?.(updated.map((f) => f.file));
         },
-        [onFilesChange],
+        [files, onFilesSelect],
     );
 
-    const clearAll = React.useCallback(() => {
-        cancelAll();
-        setImages([]);
-        onFilesChange?.([]);
+    const handleClearAll = useCallback(() => {
+        setFiles([]);
+        onFilesSelect?.([]);
 
         if (inputRef.current) {
             inputRef.current.value = '';
         }
-    }, [cancelAll, onFilesChange]);
+    }, [onFilesSelect]);
 
     const formatSize = (bytes: number) => {
         if (bytes < 1024) {
-            return bytes + ' B';
-        }
+return bytes + ' B';
+}
 
         if (bytes < 1024 * 1024) {
-            return (bytes / 1024).toFixed(1) + ' KB';
-        }
+return (bytes / 1024).toFixed(1) + ' KB';
+}
 
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     };
@@ -176,13 +151,23 @@ export function GalleryDropzoneList({
                 tabIndex={0}
                 aria-label="Upload images"
                 onClick={() => inputRef.current?.click()}
-                onKeyDown={(e) =>
-                    (e.key === 'Enter' || e.key === ' ') &&
-                    inputRef.current?.click()
-                }
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        inputRef.current?.click();
+                    }
+                }}
+                onDrop={handleDrop}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
                 className={cn(
                     'flex cursor-pointer flex-col items-center gap-3 rounded-md border-2 border-dashed p-6 transition-colors',
-                    'border-muted hover:border-muted-foreground/50',
+                    isDragOver
+                        ? 'border-primary bg-muted/50'
+                        : 'border-muted hover:border-muted-foreground/50',
                 )}
             >
                 <div className="rounded-full bg-muted p-3">
@@ -206,22 +191,22 @@ export function GalleryDropzoneList({
                 multiple
                 onChange={(e) => {
                     if (e.target.files) {
-                        addFiles(e.target.files);
-                    }
+handleFiles(e.target.files);
+}
                 }}
                 className="sr-only"
             />
 
-            {images.length > 0 && (
+            {files.length > 0 && (
                 <>
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">
-                            {images.length} file{images.length > 1 ? 's' : ''}
+                            {files.length} file{files.length > 1 ? 's' : ''}
                         </span>
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={clearAll}
+                            onClick={handleClearAll}
                             className="h-7 text-xs text-muted-foreground hover:text-destructive"
                         >
                             <Trash2 className="mr-1 size-3" />
@@ -231,13 +216,13 @@ export function GalleryDropzoneList({
 
                     <ScrollArea className="max-h-[240px]">
                         <div className="space-y-2">
-                            {images.map((image, idx) => (
-                                <React.Fragment key={image.id}>
+                            {files.map((file, idx) => (
+                                <React.Fragment key={file.id}>
                                     <div className="flex items-center gap-3 py-2">
                                         <div className="size-10 shrink-0 overflow-hidden rounded border bg-muted">
-                                            {image.preview ? (
+                                            {file.preview ? (
                                                 <img
-                                                    src={image.preview}
+                                                    src={file.preview}
                                                     alt=""
                                                     className="h-full w-full object-cover"
                                                 />
@@ -251,9 +236,9 @@ export function GalleryDropzoneList({
                                         <div className="flex min-w-0 flex-1 flex-col gap-1">
                                             <div className="flex items-center gap-2">
                                                 <span className="truncate text-sm">
-                                                    {image.file.name}
+                                                    {file.file.name}
                                                 </span>
-                                                {image.status === 'success' && (
+                                                {file.status === 'complete' && (
                                                     <Badge
                                                         variant="secondary"
                                                         className="text-success shrink-0 gap-0.5 px-1.5 py-0 text-xs"
@@ -262,29 +247,24 @@ export function GalleryDropzoneList({
                                                         Done
                                                     </Badge>
                                                 )}
-                                                {image.status === 'error' && (
+                                                {file.status === 'error' && (
                                                     <Badge
                                                         variant="destructive"
                                                         className="shrink-0 gap-0.5 px-1.5 py-0 text-xs"
                                                     >
                                                         <FileWarning className="size-3" />{' '}
-                                                        {image.error}
+                                                        {file.error || 'Error'}
                                                     </Badge>
                                                 )}
                                             </div>
-                                            {image.status === 'uploading' ? (
+                                            {file.status === 'uploading' ? (
                                                 <Progress
-                                                    value={Math.min(
-                                                        image.progress,
-                                                        100,
-                                                    )}
+                                                    value={file.progress}
                                                     className="h-1"
                                                 />
                                             ) : (
                                                 <span className="text-xs text-muted-foreground">
-                                                    {formatSize(
-                                                        image.file.size,
-                                                    )}
+                                                    {formatSize(file.file.size)}
                                                 </span>
                                             )}
                                         </div>
@@ -293,14 +273,14 @@ export function GalleryDropzoneList({
                                             variant="ghost"
                                             size="sm"
                                             onClick={() =>
-                                                handleRemove(image.id)
+                                                handleRemove(file.id)
                                             }
                                             className="size-8 shrink-0 p-0 text-muted-foreground hover:text-destructive"
                                         >
                                             <X className="size-4" />
                                         </Button>
                                     </div>
-                                    {idx < images.length - 1 && <Separator />}
+                                    {idx < files.length - 1 && <Separator />}
                                 </React.Fragment>
                             ))}
                         </div>

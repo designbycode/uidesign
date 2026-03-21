@@ -3,11 +3,7 @@
     "style": "new-york",
     "rsc": false,
     "tsx": true,
-    "registries": {
-        "@uidesign": {
-            "url": "https://uidesign.co.za/r/{name}.json"
-        }
-    },
+    "registry": "registry.json",
     "tailwind": {
         "config": "",
         "css": "resources/css/app.css",

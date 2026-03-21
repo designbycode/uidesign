@@ -1,189 +1,144 @@
 'use client';
 
-import { ImageIcon, Plus, X, Check, AlertCircle } from 'lucide-react';
+import { Plus, X, Check } from 'lucide-react';
 import * as React from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useDragOver } from '@/hooks/use-drag-over';
 
-interface ImageFile {
+interface FileWithPreview {
     id: string;
     file: File;
     preview: string;
-    progress: number;
-    status: 'uploading' | 'success' | 'error';
+    status: 'uploading' | 'complete';
 }
 
 interface GalleryDropzoneCompactProps {
-    className?: string;
-    onFilesChange?: (files: File[]) => void;
+    onFilesSelect?: (files: File[]) => void;
     maxFiles?: number;
     maxSize?: number;
+    className?: string;
 }
 
 export function GalleryDropzoneCompact({
-    className,
-    onFilesChange,
+    onFilesSelect,
     maxFiles = 6,
     maxSize = 10 * 1024 * 1024,
+    className,
 }: GalleryDropzoneCompactProps) {
-    const [images, setImages] = React.useState<ImageFile[]>([]);
-    const inputRef = React.useRef<HTMLInputElement>(null);
+    const [files, setFiles] = useState<FileWithPreview[]>([]);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    const simulateUpload = React.useCallback((imageId: string) => {
-        const interval = setInterval(() => {
-            setImages((prev) =>
-                prev.map((img) => {
-                    if (img.id !== imageId) {
-                        return img;
-                    }
-
-                    if (img.progress >= 100) {
-                        clearInterval(interval);
-
-                        return { ...img, progress: 100, status: 'success' };
-                    }
-
-                    return { ...img, progress: img.progress + 20 };
-                }),
-            );
-        }, 100);
-    }, []);
-
-    const processFiles = React.useCallback(
-        (files: FileList | File[]) => {
-            const fileArray = Array.from(files);
-            const remainingSlots = maxFiles - images.length;
+    const handleFiles = useCallback(
+        (newFiles: FileList) => {
+            const fileArray = Array.from(newFiles);
+            const remainingSlots = maxFiles - files.length;
             const filesToProcess = fileArray.slice(0, remainingSlots);
 
-            const newImages: ImageFile[] = filesToProcess.map((file) => {
-                const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-                if (!file.type.startsWith('image/') || file.size > maxSize) {
-                    return {
-                        id,
-                        file,
-                        preview: '',
-                        progress: 0,
-                        status: 'error' as const,
-                    };
-                }
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    setImages((prev) =>
-                        prev.map((img) =>
-                            img.id === id
-                                ? {
-                                      ...img,
-                                      preview: e.target?.result as string,
-                                  }
-                                : img,
-                        ),
-                    );
-                };
-                reader.readAsDataURL(file);
-
-                return {
-                    id,
+            const newFileObjects = filesToProcess
+                .filter(
+                    (file) =>
+                        file.type.startsWith('image/') && file.size <= maxSize,
+                )
+                .map((file) => ({
+                    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
                     file,
-                    preview: '',
-                    progress: 0,
+                    preview: URL.createObjectURL(file),
                     status: 'uploading' as const,
-                };
-            });
+                }));
 
-            setImages((prev) => [...prev, ...newImages]);
-            newImages.forEach((img) => {
-                if (img.status !== 'error') {
-                    setTimeout(() => simulateUpload(img.id), 50);
-                }
-            });
+            const updated = [...files, ...newFileObjects].slice(0, maxFiles);
+            setFiles(updated);
+            onFilesSelect?.(updated.map((f) => f.file));
 
-            onFilesChange?.(
-                [...images, ...newImages]
-                    .filter((i) => i.status !== 'error')
-                    .map((i) => i.file),
-            );
-        },
-        [images, maxFiles, maxSize, onFilesChange, simulateUpload],
-    );
-
-    const handleDrop = React.useCallback(
-        (droppedFiles: FileList) => {
-            processFiles(droppedFiles);
-        },
-        [processFiles],
-    );
-
-    const { dragProps } = useDragOver({ onDrop: handleDrop });
-
-    const handleRemove = React.useCallback(
-        (id: string) => {
-            setImages((prev) => {
-                const updated = prev.filter((img) => img.id !== id);
-                onFilesChange?.(
-                    updated
-                        .filter((i) => i.status !== 'error')
-                        .map((i) => i.file),
+            newFileObjects.forEach((fileObj) => {
+                setTimeout(
+                    () => {
+                        setFiles((prev) =>
+                            prev.map((f) =>
+                                f.id === fileObj.id
+                                    ? { ...f, status: 'complete' as const }
+                                    : f,
+                            ),
+                        );
+                    },
+                    800 + Math.random() * 800,
                 );
-
-                return updated;
             });
         },
-        [onFilesChange],
+        [files, maxFiles, maxSize, onFilesSelect],
+    );
+
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
+
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
+        },
+        [handleFiles],
+    );
+
+    const handleRemove = useCallback(
+        (id: string) => {
+            const updated = files.filter((f) => f.id !== id);
+            setFiles(updated);
+            onFilesSelect?.(updated.map((f) => f.file));
+        },
+        [files, onFilesSelect],
     );
 
     return (
         <div
-            className={cn('flex flex-wrap items-center gap-2', className)}
-            {...dragProps}
+            className={cn(
+                'flex flex-wrap items-center gap-2 rounded-lg border p-2',
+                isDragOver && 'border-primary bg-muted/50',
+                className,
+            )}
+            onDrop={handleDrop}
+            onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+            }}
+            onDragLeave={() => setIsDragOver(false)}
         >
-            {images.map((image) => (
-                <Tooltip key={image.id}>
+            <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                    if (e.target.files) {
+                        handleFiles(e.target.files);
+                    }
+                }}
+                className="sr-only"
+            />
+
+            {files.map((file) => (
+                <Tooltip key={file.id}>
                     <TooltipTrigger asChild>
                         <div className="group relative size-14 overflow-hidden rounded-md border bg-muted">
-                            {image.preview ? (
-                                <img
-                                    src={image.preview}
-                                    alt=""
-                                    className="h-full w-full object-cover"
-                                />
-                            ) : (
-                                <div className="flex h-full w-full items-center justify-center">
-                                    <ImageIcon className="size-5 text-muted-foreground" />
-                                </div>
-                            )}
-
-                            {image.status === 'uploading' && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-background/70">
-                                    <Progress
-                                        value={Math.min(image.progress, 100)}
-                                        className="h-1 w-10"
-                                    />
-                                </div>
-                            )}
-
-                            {image.status === 'success' && (
+                            <img
+                                src={file.preview}
+                                alt=""
+                                className="h-full w-full object-cover"
+                            />
+                            {file.status === 'complete' && (
                                 <div className="bg-success absolute right-0.5 bottom-0.5 rounded-full p-0.5">
                                     <Check className="text-success-foreground size-2.5" />
                                 </div>
                             )}
-                            {image.status === 'error' && (
-                                <div className="absolute right-0.5 bottom-0.5 rounded-full bg-destructive p-0.5">
-                                    <AlertCircle className="size-2.5 text-white" />
-                                </div>
-                            )}
-
                             <button
-                                type="button"
-                                onClick={() => handleRemove(image.id)}
+                                onClick={() => handleRemove(file.id)}
                                 className="absolute top-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-foreground/80 text-background opacity-0 transition-opacity group-hover:opacity-100"
                                 aria-label="Remove"
                             >
@@ -192,34 +147,21 @@ export function GalleryDropzoneCompact({
                         </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
-                        {image.file.name}
+                        {file.file.name}
                     </TooltipContent>
                 </Tooltip>
             ))}
 
-            {images.length < maxFiles && (
+            {files.length < maxFiles && (
                 <Button
                     variant="outline"
                     size="sm"
                     onClick={() => inputRef.current?.click()}
-                    className="size-14 border-dashed"
+                    className="size-14 border-dashed p-0"
                 >
                     <Plus className="size-5 text-muted-foreground" />
                 </Button>
             )}
-
-            <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => {
-                    if (e.target.files) {
-                        processFiles(e.target.files);
-                    }
-                }}
-                className="sr-only"
-            />
         </div>
     );
 }

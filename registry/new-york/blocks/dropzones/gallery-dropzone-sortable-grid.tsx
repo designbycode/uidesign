@@ -6,9 +6,12 @@ import { Upload, X, ImageIcon, GripVertical } from 'lucide-react';
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { FileWithPreview } from '@/hooks/types';
-import { useImageDropzone } from '@/hooks/use-image-dropzone';
-import { useSortableFiles } from '@/hooks/use-sortable-files';
+
+interface FileWithPreview {
+    id: string;
+    file: File;
+    preview: string;
+}
 
 interface SortableImageProps {
     image: FileWithPreview;
@@ -90,26 +93,87 @@ export function GalleryDropzoneSortableGrid({
     className,
     enableReorder = true,
 }: GalleryDropzoneSortableGridProps) {
-    const {
-        files,
-        isDragOver,
-        dragProps,
-        inputRef,
-        addFiles,
-        removeFile,
-        clearAll,
-        hasReachedMax,
-    } = useImageDropzone({
-        maxFiles,
-        maxSize,
-        onFilesChange: onFilesSelect,
-    });
+    const [files, setFiles] = React.useState<FileWithPreview[]>([]);
+    const [isDragOver, setIsDragOver] = React.useState(false);
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
-    const { handleDragEnd } = useSortableFiles({
-        items: files,
-        onReorderFiles: onReorder,
-        getFile: (item) => item.file,
-    });
+    const handleFiles = React.useCallback(
+        (newFiles: FileList) => {
+            const validFiles = Array.from(newFiles)
+                .filter(
+                    (file) =>
+                        file.type.startsWith('image/') && file.size <= maxSize,
+                )
+                .slice(0, maxFiles - files.length);
+
+            const newFileObjects = validFiles.map((file) => ({
+                file,
+                preview: URL.createObjectURL(file),
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            }));
+
+            const updated = [...files, ...newFileObjects].slice(0, maxFiles);
+            setFiles(updated);
+            onFilesSelect?.(updated.map((f) => f.file));
+        },
+        [files, maxFiles, maxSize, onFilesSelect],
+    );
+
+    const handleDrop = React.useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
+
+            if (e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
+        },
+        [handleFiles],
+    );
+
+    const removeFile = React.useCallback(
+        (id: string) => {
+            const updated = files.filter((f) => f.id !== id);
+            setFiles(updated);
+            onFilesSelect?.(updated.map((f) => f.file));
+        },
+        [files, onFilesSelect],
+    );
+
+    const clearAll = React.useCallback(() => {
+        setFiles([]);
+        onFilesSelect?.([]);
+
+        if (inputRef.current) {
+            inputRef.current.value = '';
+        }
+    }, [onFilesSelect]);
+
+    const handleDragEnd = React.useCallback(
+        (event: { canceled: boolean; operation?: { source?: unknown } }) => {
+            if (event.canceled || !event.operation?.source) {
+return;
+}
+
+            const source = event.operation.source as {
+                id?: string;
+                index?: number;
+            };
+
+            if (source.id && typeof source.index === 'number') {
+                const sourceIndex = files.findIndex((f) => f.id === source.id);
+
+                if (sourceIndex !== -1 && sourceIndex !== source.index) {
+                    const newFiles = [...files];
+                    const [removed] = newFiles.splice(sourceIndex, 1);
+                    newFiles.splice(source.index, 0, removed);
+                    setFiles(newFiles);
+                    onReorder?.(newFiles.map((f) => f.file));
+                }
+            }
+        },
+        [files, onReorder],
+    );
 
     const gridContent = (
         <div className="grid grid-cols-3 gap-3">
@@ -123,7 +187,7 @@ export function GalleryDropzoneSortableGrid({
                 />
             ))}
 
-            {!hasReachedMax && (
+            {files.length < maxFiles && (
                 <button
                     onClick={() => inputRef.current?.click()}
                     className="flex aspect-square flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-muted-foreground/25 text-muted-foreground transition-colors hover:border-muted-foreground/50 hover:bg-muted/50"
@@ -145,7 +209,12 @@ export function GalleryDropzoneSortableGrid({
                             ? 'border-primary bg-primary/5'
                             : 'border-muted-foreground/25 hover:border-muted-foreground/50',
                     )}
-                    {...dragProps}
+                    onDrop={handleDrop}
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragOver(true);
+                    }}
+                    onDragLeave={() => setIsDragOver(false)}
                     onClick={() => inputRef.current?.click()}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -179,7 +248,7 @@ export function GalleryDropzoneSortableGrid({
                 multiple
                 onChange={(e) => {
                     if (e.target.files) {
-                        addFiles(e.target.files);
+                        handleFiles(e.target.files);
                     }
                 }}
                 className="sr-only"

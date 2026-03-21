@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 export interface UseDragOverOptions {
     onDragEnter?: () => void;
@@ -8,25 +8,36 @@ export interface UseDragOverOptions {
     onDrop?: (files: FileList) => void;
 }
 
+export interface UseDragOverReturn {
+    isDragOver: boolean;
+    dragProps: {
+        onDragEnter: (e: React.DragEvent) => void;
+        onDragLeave: (e: React.DragEvent) => void;
+        onDrop: (e: React.DragEvent) => void;
+        onDragOver: (e: React.DragEvent) => void;
+    };
+}
+
 export function useDragOver({
     onDragEnter,
     onDragLeave,
     onDrop,
-}: UseDragOverOptions = {}) {
+}: UseDragOverOptions = {}): UseDragOverReturn {
     const [isDragOver, setIsDragOver] = useState(false);
     const dragCounter = useRef(0);
-    const isDraggingRef = useRef(false);
 
     const handleDragEnter = useCallback(
         (e: React.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
-            dragCounter.current++;
 
-            if (dragCounter.current === 1) {
-                isDraggingRef.current = true;
-                setIsDragOver(true);
-                onDragEnter?.();
+            if (e.dataTransfer?.types.includes('Files')) {
+                dragCounter.current++;
+
+                if (dragCounter.current === 1) {
+                    setIsDragOver(true);
+                    onDragEnter?.();
+                }
             }
         },
         [onDragEnter],
@@ -36,12 +47,14 @@ export function useDragOver({
         (e: React.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
-            dragCounter.current--;
 
-            if (dragCounter.current === 0) {
-                isDraggingRef.current = false;
-                setIsDragOver(false);
-                onDragLeave?.();
+            if (e.dataTransfer?.types.includes('Files')) {
+                dragCounter.current--;
+
+                if (dragCounter.current === 0) {
+                    setIsDragOver(false);
+                    onDragLeave?.();
+                }
             }
         },
         [onDragLeave],
@@ -51,11 +64,14 @@ export function useDragOver({
         (e: React.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
+
             dragCounter.current = 0;
-            isDraggingRef.current = false;
             setIsDragOver(false);
 
-            if (e.dataTransfer.files.length > 0) {
+            if (
+                e.dataTransfer?.types.includes('Files') &&
+                e.dataTransfer.files.length > 0
+            ) {
                 onDrop?.(e.dataTransfer.files);
             }
         },
