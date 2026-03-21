@@ -2,89 +2,127 @@
     "$schema": "https://ui.shadcn.com/schema/registry.json",
     "name": "uidesign",
     "homepage": "https://uidesign.co.za",
+    "hooks": [
+        {
+            "name": "use-drag-over",
+            "description": "Use drag over hook",
+            "file": {
+                "path": "registry/new-york/hooks/use-drag-over.ts",
+                "type": "registry:hook"
+            }
+        },
+        {
+            "name": "use-file-collection",
+            "description": "Use file collection hook",
+            "file": {
+                "path": "registry/new-york/hooks/use-file-collection.ts",
+                "type": "registry:hook"
+            }
+        },
+        {
+            "name": "use-file-preview",
+            "description": "Use file preview hook",
+            "file": {
+                "path": "registry/new-york/hooks/use-file-preview.ts",
+                "type": "registry:hook"
+            }
+        },
+        {
+            "name": "use-image-dropzone",
+            "description": "Use image dropzone hook",
+            "file": {
+                "path": "registry/new-york/hooks/use-image-dropzone.ts",
+                "type": "registry:hook"
+            }
+        },
+        {
+            "name": "use-sortable-files",
+            "description": "Use sortable files hook",
+            "file": {
+                "path": "registry/new-york/hooks/use-sortable-files.ts",
+                "type": "registry:hook"
+            }
+        },
+        {
+            "name": "use-upload-progress",
+            "description": "Use upload progress hook",
+            "file": {
+                "path": "registry/new-york/hooks/use-upload-progress.ts",
+                "type": "registry:hook"
+            }
+        }
+    ],
     "items": [
         {
-            "name": "avatar-dropzone-minimal",
+            "name": "auth-card",
             "type": "registry:block",
-            "title": "Avatar Dropzone Minimal",
-            "description": "A minimal avatar dropzone component.",
-            "registryDependencies": ["avatar", "spinner"],
+            "title": "Auth Card",
+            "description": "A card-styled auth card component.",
             "files": [
                 {
-                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-minimal.tsx",
+                    "path": "registry/new-york/cards/auth-card.tsx",
                     "type": "registry:block"
                 }
-            ]
-        },
-        {
-            "name": "avatar-dropzone-card",
-            "type": "registry:block",
-            "title": "Avatar Dropzone Card",
-            "description": "An avatar dropzone with card styling.",
+            ],
             "registryDependencies": [
-                "avatar",
                 "button",
                 "card",
-                "progress",
-                "badge"
-            ],
-            "files": [
-                {
-                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-card.tsx",
-                    "type": "registry:block"
-                }
-            ]
-        },
-        {
-            "name": "avatar-dropzone-inline",
-            "type": "registry:block",
-            "title": "Avatar Dropzone Inline",
-            "description": "An inline avatar dropzone component.",
-            "registryDependencies": ["avatar", "button", "skeleton"],
-            "files": [
-                {
-                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-inline.tsx",
-                    "type": "registry:block"
-                }
+                "input",
+                "label"
             ]
         },
         {
             "name": "avatar-dropzone-badge",
             "type": "registry:block",
             "title": "Avatar Dropzone Badge",
-            "description": "An avatar dropzone with badge styling.",
-            "registryDependencies": ["avatar", "badge", "tooltip", "progress"],
+            "description": "A badge-styled avatar dropzone component.",
             "files": [
                 {
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-badge.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "avatar",
+                "badge",
+                "progress",
+                "tooltip"
             ]
         },
         {
-            "name": "avatar-dropzone-square",
+            "name": "avatar-dropzone-card",
             "type": "registry:block",
-            "title": "Avatar Dropzone Square",
-            "description": "A square-styled avatar dropzone component.",
-            "registryDependencies": ["button", "progress", "badge"],
+            "title": "Avatar Dropzone Card",
+            "description": "A card-styled avatar dropzone component.",
             "files": [
                 {
-                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-square.tsx",
+                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-card.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "avatar",
+                "badge",
+                "button",
+                "card",
+                "progress"
             ]
         },
         {
-            "name": "avatar-dropzone-outlined",
+            "name": "avatar-dropzone-field",
             "type": "registry:block",
-            "title": "Avatar Dropzone Outlined",
-            "description": "An outlined avatar dropzone component.",
-            "registryDependencies": ["button"],
+            "title": "Avatar Dropzone Field",
+            "description": "A field-styled avatar dropzone component.",
             "files": [
                 {
-                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-outlined.tsx",
+                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-field.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "avatar",
+                "button",
+                "label"
             ]
         },
         {
@@ -92,72 +130,149 @@
             "type": "registry:block",
             "title": "Avatar Dropzone Ghost",
             "description": "A ghost-styled avatar dropzone component.",
-            "registryDependencies": ["avatar"],
             "files": [
                 {
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-ghost.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "avatar"
             ]
         },
         {
-            "name": "avatar-dropzone-field",
+            "name": "avatar-dropzone-inline",
             "type": "registry:block",
-            "title": "Avatar Dropzone Field",
-            "description": "An avatar dropzone with field styling.",
-            "registryDependencies": ["button", "label", "avatar"],
+            "title": "Avatar Dropzone Inline",
+            "description": "An inline avatar dropzone component.",
             "files": [
                 {
-                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-field.tsx",
+                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-inline.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "avatar",
+                "button",
+                "skeleton"
             ]
         },
         {
-            "name": "avatar-dropzone-sortable-stack",
+            "name": "avatar-dropzone-minimal",
             "type": "registry:block",
-            "title": "Avatar Dropzone Sortable Stack",
-            "description": "An avatar dropzone with sortable stack functionality.",
-            "registryDependencies": ["button", "tooltip", "avatar"],
-            "dependencies": ["@dnd-kit/react"],
+            "title": "Avatar Dropzone Minimal",
+            "description": "A minimal avatar dropzone component.",
             "files": [
                 {
-                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-sortable-stack.tsx",
+                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-minimal.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "avatar",
+                "spinner"
+            ]
+        },
+        {
+            "name": "avatar-dropzone-outlined",
+            "type": "registry:block",
+            "title": "Avatar Dropzone Outlined",
+            "description": "An outlined avatar dropzone component.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-outlined.tsx",
+                    "type": "registry:block"
+                }
+            ],
+            "registryDependencies": [
+                "button"
             ]
         },
         {
             "name": "avatar-dropzone-sortable-row",
             "type": "registry:block",
             "title": "Avatar Dropzone Sortable Row",
-            "description": "An avatar dropzone with sortable row functionality.",
-            "registryDependencies": ["button", "card", "badge", "avatar"],
-            "dependencies": ["@dnd-kit/react"],
+            "description": "A AvatarDropzoneSortableRow component.",
             "files": [
                 {
                     "path": "registry/new-york/blocks/dropzones/avatar-dropzone-sortable-row.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "avatar",
+                "badge",
+                "button",
+                "card"
+            ],
+            "dependencies": [
+                "@dnd-kit/react"
+            ],
+            "hooks": [
+                "use-image-dropzone",
+                "use-sortable-files"
             ]
         },
         {
-            "name": "gallery-dropzone-list",
+            "name": "avatar-dropzone-sortable-stack",
             "type": "registry:block",
-            "title": "Gallery Dropzone List",
-            "description": "A gallery dropzone with list layout.",
-            "registryDependencies": [
-                "button",
-                "progress",
-                "badge",
-                "separator",
-                "scroll-area"
-            ],
+            "title": "Avatar Dropzone Sortable Stack",
+            "description": "A AvatarDropzoneSortableStack component.",
             "files": [
                 {
-                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-list.tsx",
+                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-sortable-stack.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "avatar",
+                "button",
+                "tooltip"
+            ],
+            "dependencies": [
+                "@dnd-kit/react"
+            ],
+            "hooks": [
+                "use-image-dropzone",
+                "use-sortable-files"
+            ]
+        },
+        {
+            "name": "avatar-dropzone-square",
+            "type": "registry:block",
+            "title": "Avatar Dropzone Square",
+            "description": "A square-styled avatar dropzone component.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/dropzones/avatar-dropzone-square.tsx",
+                    "type": "registry:block"
+                }
+            ],
+            "registryDependencies": [
+                "badge",
+                "button",
+                "progress"
+            ]
+        },
+        {
+            "name": "gallery-dropzone-carousel",
+            "type": "registry:block",
+            "title": "Gallery Dropzone Carousel",
+            "description": "A carousel-style gallery dropzone component.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-carousel.tsx",
+                    "type": "registry:block"
+                }
+            ],
+            "registryDependencies": [
+                "badge",
+                "button",
+                "progress",
+                "scroll"
+            ],
+            "hooks": [
+                "use-drag-over"
             ]
         },
         {
@@ -165,56 +280,102 @@
             "type": "registry:block",
             "title": "Gallery Dropzone Compact",
             "description": "A compact gallery dropzone component.",
-            "registryDependencies": ["button", "progress", "tooltip"],
             "files": [
                 {
                     "path": "registry/new-york/blocks/dropzones/gallery-dropzone-compact.tsx",
                     "type": "registry:block"
                 }
-            ]
-        },
-        {
-            "name": "gallery-dropzone-masonry",
-            "type": "registry:block",
-            "title": "Gallery Dropzone Masonry",
-            "description": "A masonry-style gallery dropzone.",
-            "registryDependencies": ["button", "card", "progress", "badge"],
-            "files": [
-                {
-                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-masonry.tsx",
-                    "type": "registry:block"
-                }
-            ]
-        },
-        {
-            "name": "gallery-dropzone-carousel",
-            "type": "registry:block",
-            "title": "Gallery Dropzone Carousel",
-            "description": "A carousel-style gallery dropzone.",
+            ],
             "registryDependencies": [
                 "button",
                 "progress",
-                "badge",
-                "scroll-area"
+                "tooltip"
             ],
-            "files": [
-                {
-                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-carousel.tsx",
-                    "type": "registry:block"
-                }
+            "hooks": [
+                "use-drag-over"
             ]
         },
         {
             "name": "gallery-dropzone-dialog",
             "type": "registry:block",
             "title": "Gallery Dropzone Dialog",
-            "description": "A gallery dropzone with dialog functionality.",
-            "registryDependencies": ["button", "progress", "badge", "dialog"],
+            "description": "A dialog-style gallery dropzone component.",
             "files": [
                 {
                     "path": "registry/new-york/blocks/dropzones/gallery-dropzone-dialog.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "badge",
+                "button",
+                "dialog",
+                "progress"
+            ],
+            "hooks": [
+                "use-image-dropzone",
+                "use-upload-progress"
+            ]
+        },
+        {
+            "name": "gallery-dropzone-list",
+            "type": "registry:block",
+            "title": "Gallery Dropzone List",
+            "description": "A list-layout gallery dropzone component.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-list.tsx",
+                    "type": "registry:block"
+                }
+            ],
+            "registryDependencies": [
+                "badge",
+                "button",
+                "progress",
+                "scroll",
+                "separator"
+            ],
+            "hooks": [
+                "use-upload-progress"
+            ]
+        },
+        {
+            "name": "gallery-dropzone-masonry",
+            "type": "registry:block",
+            "title": "Gallery Dropzone Masonry",
+            "description": "A masonry-style gallery dropzone component.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-masonry.tsx",
+                    "type": "registry:block"
+                }
+            ],
+            "registryDependencies": [
+                "badge",
+                "button",
+                "card",
+                "progress"
+            ],
+            "hooks": [
+                "use-drag-over"
+            ]
+        },
+        {
+            "name": "gallery-dropzone-pills",
+            "type": "registry:block",
+            "title": "Gallery Dropzone Pills",
+            "description": "A pill-style gallery dropzone component.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-pills.tsx",
+                    "type": "registry:block"
+                }
+            ],
+            "registryDependencies": [
+                "badge"
+            ],
+            "hooks": [
+                "use-image-dropzone"
             ]
         },
         {
@@ -222,85 +383,108 @@
             "type": "registry:block",
             "title": "Gallery Dropzone Simple",
             "description": "A simple gallery dropzone component.",
-            "registryDependencies": ["button"],
             "files": [
                 {
                     "path": "registry/new-york/blocks/dropzones/gallery-dropzone-simple.tsx",
                     "type": "registry:block"
                 }
-            ]
-        },
-        {
-            "name": "gallery-dropzone-table",
-            "type": "registry:block",
-            "title": "Gallery Dropzone Table",
-            "description": "A table-style gallery dropzone.",
-            "registryDependencies": ["button", "progress", "table"],
-            "files": [
-                {
-                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-table.tsx",
-                    "type": "registry:block"
-                }
-            ]
-        },
-        {
-            "name": "gallery-dropzone-pills",
-            "type": "registry:block",
-            "title": "Gallery Dropzone Pills",
-            "description": "A gallery dropzone with pill-style thumbnails.",
-            "registryDependencies": ["badge"],
-            "files": [
-                {
-                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-pills.tsx",
-                    "type": "registry:block"
-                }
-            ]
-        },
-        {
-            "name": "gallery-dropzone-sortable-grid",
-            "type": "registry:block",
-            "title": "Gallery Dropzone Sortable Grid",
-            "description": "A sortable gallery dropzone with grid layout.",
-            "registryDependencies": ["button"],
-            "dependencies": ["@dnd-kit/react"],
-            "files": [
-                {
-                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-sortable-grid.tsx",
-                    "type": "registry:block"
-                }
-            ]
-        },
-        {
-            "name": "gallery-dropzone-sortable-list",
-            "type": "registry:block",
-            "title": "Gallery Dropzone Sortable List",
-            "description": "A sortable gallery dropzone with list layout.",
-            "registryDependencies": [
-                "button",
-                "badge",
-                "separator",
-                "scroll-area"
             ],
-            "dependencies": ["@dnd-kit/react"],
-            "files": [
-                {
-                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-sortable-list.tsx",
-                    "type": "registry:block"
-                }
+            "registryDependencies": [
+                "button"
+            ],
+            "hooks": [
+                "use-image-dropzone"
             ]
         },
         {
             "name": "gallery-dropzone-sortable-cards",
             "type": "registry:block",
             "title": "Gallery Dropzone Sortable Cards",
-            "description": "A sortable gallery dropzone with card layout.",
-            "registryDependencies": ["button", "card", "badge"],
-            "dependencies": ["@dnd-kit/react"],
+            "description": "A card-styled gallery dropzone component.",
             "files": [
                 {
                     "path": "registry/new-york/blocks/dropzones/gallery-dropzone-sortable-cards.tsx",
                     "type": "registry:block"
                 }
+            ],
+            "registryDependencies": [
+                "badge",
+                "button",
+                "card"
+            ],
+            "dependencies": [
+                "@dnd-kit/react"
+            ],
+            "hooks": [
+                "use-image-dropzone",
+                "use-sortable-files"
+            ]
+        },
+        {
+            "name": "gallery-dropzone-sortable-grid",
+            "type": "registry:block",
+            "title": "Gallery Dropzone Sortable Grid",
+            "description": "A GalleryDropzoneSortableGrid component.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-sortable-grid.tsx",
+                    "type": "registry:block"
+                }
+            ],
+            "registryDependencies": [
+                "button"
+            ],
+            "dependencies": [
+                "@dnd-kit/react"
+            ],
+            "hooks": [
+                "use-image-dropzone",
+                "use-sortable-files"
+            ]
+        },
+        {
+            "name": "gallery-dropzone-sortable-list",
+            "type": "registry:block",
+            "title": "Gallery Dropzone Sortable List",
+            "description": "A list-layout gallery dropzone component.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-sortable-list.tsx",
+                    "type": "registry:block"
+                }
+            ],
+            "registryDependencies": [
+                "badge",
+                "button",
+                "scroll",
+                "separator"
+            ],
+            "dependencies": [
+                "@dnd-kit/react"
+            ],
+            "hooks": [
+                "use-image-dropzone",
+                "use-sortable-files"
+            ]
+        },
+        {
+            "name": "gallery-dropzone-table",
+            "type": "registry:block",
+            "title": "Gallery Dropzone Table",
+            "description": "A table-style gallery dropzone component.",
+            "files": [
+                {
+                    "path": "registry/new-york/blocks/dropzones/gallery-dropzone-table.tsx",
+                    "type": "registry:block"
+                }
+            ],
+            "registryDependencies": [
+                "button",
+                "progress",
+                "table"
+            ],
+            "hooks": [
+                "use-drag-over"
             ]
         }
     ]
