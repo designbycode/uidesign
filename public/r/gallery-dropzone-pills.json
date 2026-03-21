@@ -3,8 +3,8 @@
   "name": "gallery-dropzone-pills",
   "title": "Gallery Dropzone Pills",
   "description": "A gallery dropzone with pill-style thumbnails.",
-  "dependencies": [
-    "button"
+  "registryDependencies": [
+    "badge"
   ],
   "files": [
     {

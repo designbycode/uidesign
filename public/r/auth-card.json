@@ -3,7 +3,7 @@
   "name": "auth-card",
   "title": "Auth Card",
   "description": "A card component for authentication with email and password fields.",
-  "dependencies": [
+  "registryDependencies": [
     "button",
     "card",
     "input",

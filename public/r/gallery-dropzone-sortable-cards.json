@@ -4,8 +4,12 @@
   "title": "Gallery Dropzone Sortable Cards",
   "description": "A sortable gallery dropzone with card layout.",
   "dependencies": [
-    "button",
     "@dnd-kit/react"
+  ],
+  "registryDependencies": [
+    "button",
+    "card",
+    "badge"
   ],
   "files": [
     {

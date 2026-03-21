@@ -3,7 +3,7 @@
   "name": "button-01",
   "title": "Button 01",
   "description": "A simple button component.",
-  "dependencies": [
+  "registryDependencies": [
     "button"
   ],
   "files": [

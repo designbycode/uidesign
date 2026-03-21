@@ -3,9 +3,10 @@
   "name": "avatar-dropzone-inline",
   "title": "Avatar Dropzone Inline",
   "description": "An inline avatar dropzone component.",
-  "dependencies": [
+  "registryDependencies": [
     "avatar",
-    "spinner"
+    "button",
+    "skeleton"
   ],
   "files": [
     {

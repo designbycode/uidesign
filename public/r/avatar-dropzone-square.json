@@ -3,9 +3,10 @@
   "name": "avatar-dropzone-square",
   "title": "Avatar Dropzone Square",
   "description": "A square-styled avatar dropzone component.",
-  "dependencies": [
-    "avatar",
-    "spinner"
+  "registryDependencies": [
+    "button",
+    "progress",
+    "badge"
   ],
   "files": [
     {

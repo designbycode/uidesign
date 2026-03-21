@@ -3,8 +3,10 @@
   "name": "gallery-dropzone-table",
   "title": "Gallery Dropzone Table",
   "description": "A table-style gallery dropzone.",
-  "dependencies": [
-    "button"
+  "registryDependencies": [
+    "button",
+    "progress",
+    "table"
   ],
   "files": [
     {

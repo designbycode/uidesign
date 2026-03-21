@@ -3,7 +3,7 @@
   "name": "gallery-dropzone-simple",
   "title": "Gallery Dropzone Simple",
   "description": "A simple gallery dropzone component.",
-  "dependencies": [
+  "registryDependencies": [
     "button"
   ],
   "files": [

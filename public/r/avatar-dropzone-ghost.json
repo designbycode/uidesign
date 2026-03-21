@@ -3,9 +3,8 @@
   "name": "avatar-dropzone-ghost",
   "title": "Avatar Dropzone Ghost",
   "description": "A ghost-styled avatar dropzone component.",
-  "dependencies": [
-    "avatar",
-    "spinner"
+  "registryDependencies": [
+    "avatar"
   ],
   "files": [
     {

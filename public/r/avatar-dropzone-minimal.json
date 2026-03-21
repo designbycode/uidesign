@@ -3,7 +3,7 @@
   "name": "avatar-dropzone-minimal",
   "title": "Avatar Dropzone Minimal",
   "description": "A minimal avatar dropzone component.",
-  "dependencies": [
+  "registryDependencies": [
     "avatar",
     "spinner"
   ],

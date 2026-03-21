@@ -3,8 +3,12 @@
   "name": "gallery-dropzone-list",
   "title": "Gallery Dropzone List",
   "description": "A gallery dropzone with list layout.",
-  "dependencies": [
-    "button"
+  "registryDependencies": [
+    "button",
+    "progress",
+    "badge",
+    "separator",
+    "scroll-area"
   ],
   "files": [
     {

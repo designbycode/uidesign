@@ -4,11 +4,13 @@
   "title": "Avatar Dropzone Sortable Row",
   "description": "An avatar dropzone with sortable row functionality.",
   "dependencies": [
-    "avatar",
-    "spinner",
-    "button",
-    "tooltip",
     "@dnd-kit/react"
+  ],
+  "registryDependencies": [
+    "button",
+    "card",
+    "badge",
+    "avatar"
   ],
   "files": [
     {

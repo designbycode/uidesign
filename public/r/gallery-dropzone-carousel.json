@@ -3,8 +3,11 @@
   "name": "gallery-dropzone-carousel",
   "title": "Gallery Dropzone Carousel",
   "description": "A carousel-style gallery dropzone.",
-  "dependencies": [
-    "button"
+  "registryDependencies": [
+    "button",
+    "progress",
+    "badge",
+    "scroll-area"
   ],
   "files": [
     {

@@ -4,8 +4,13 @@
   "title": "Gallery Dropzone Sortable List",
   "description": "A sortable gallery dropzone with list layout.",
   "dependencies": [
-    "button",
     "@dnd-kit/react"
+  ],
+  "registryDependencies": [
+    "button",
+    "badge",
+    "separator",
+    "scroll-area"
   ],
   "files": [
     {

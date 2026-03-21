@@ -3,9 +3,10 @@
   "name": "avatar-dropzone-field",
   "title": "Avatar Dropzone Field",
   "description": "An avatar dropzone with field styling.",
-  "dependencies": [
-    "avatar",
-    "spinner"
+  "registryDependencies": [
+    "button",
+    "label",
+    "avatar"
   ],
   "files": [
     {

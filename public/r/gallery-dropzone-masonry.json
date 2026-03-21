@@ -3,8 +3,11 @@
   "name": "gallery-dropzone-masonry",
   "title": "Gallery Dropzone Masonry",
   "description": "A masonry-style gallery dropzone.",
-  "dependencies": [
-    "button"
+  "registryDependencies": [
+    "button",
+    "card",
+    "progress",
+    "badge"
   ],
   "files": [
     {

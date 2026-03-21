@@ -3,8 +3,10 @@
   "name": "gallery-dropzone-compact",
   "title": "Gallery Dropzone Compact",
   "description": "A compact gallery dropzone component.",
-  "dependencies": [
-    "button"
+  "registryDependencies": [
+    "button",
+    "progress",
+    "tooltip"
   ],
   "files": [
     {

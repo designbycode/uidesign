@@ -1,160 +1,225 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { ImageIcon, Plus, X, Check, AlertCircle } from "lucide-react"
+import { ImageIcon, Plus, X, Check, AlertCircle } from 'lucide-react';
+import * as React from 'react';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { useDragOver } from '@/hooks/use-drag-over';
 
 interface ImageFile {
-  id: string
-  file: File
-  preview: string
-  progress: number
-  status: "uploading" | "success" | "error"
+    id: string;
+    file: File;
+    preview: string;
+    progress: number;
+    status: 'uploading' | 'success' | 'error';
 }
 
 interface GalleryDropzoneCompactProps {
-  className?: string
-  onFilesChange?: (files: File[]) => void
-  maxFiles?: number
-  maxSize?: number
+    className?: string;
+    onFilesChange?: (files: File[]) => void;
+    maxFiles?: number;
+    maxSize?: number;
 }
 
 export function GalleryDropzoneCompact({
-  className,
-  onFilesChange,
-  maxFiles = 6,
-  maxSize = 10,
+    className,
+    onFilesChange,
+    maxFiles = 6,
+    maxSize = 10 * 1024 * 1024,
 }: GalleryDropzoneCompactProps) {
-  const [images, setImages] = React.useState<ImageFile[]>([])
-  const inputRef = React.useRef<HTMLInputElement>(null)
+    const [images, setImages] = React.useState<ImageFile[]>([]);
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const simulateUpload = React.useCallback((imageId: string) => {
-    const interval = setInterval(() => {
-      setImages((prev) =>
-        prev.map((img) => {
-          if (img.id !== imageId) return img
-          if (img.progress >= 100) {
-            clearInterval(interval)
-            return { ...img, progress: 100, status: "success" }
-          }
-          return { ...img, progress: img.progress + 20 }
-        })
-      )
-    }, 100)
-  }, [])
+    const simulateUpload = React.useCallback((imageId: string) => {
+        const interval = setInterval(() => {
+            setImages((prev) =>
+                prev.map((img) => {
+                    if (img.id !== imageId) {
+                        return img;
+                    }
 
-  const processFiles = React.useCallback(
-    (files: FileList | File[]) => {
-      const fileArray = Array.from(files)
-      const remainingSlots = maxFiles - images.length
-      const filesToProcess = fileArray.slice(0, remainingSlots)
+                    if (img.progress >= 100) {
+                        clearInterval(interval);
 
-      const newImages: ImageFile[] = filesToProcess.map((file) => {
-        const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                        return { ...img, progress: 100, status: 'success' };
+                    }
 
-        if (!file.type.startsWith("image/") || file.size > maxSize * 1024 * 1024) {
-          return { id, file, preview: "", progress: 0, status: "error" as const }
-        }
+                    return { ...img, progress: img.progress + 20 };
+                }),
+            );
+        }, 100);
+    }, []);
 
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          setImages((prev) =>
-            prev.map((img) => (img.id === id ? { ...img, preview: e.target?.result as string } : img))
-          )
-        }
-        reader.readAsDataURL(file)
+    const processFiles = React.useCallback(
+        (files: FileList | File[]) => {
+            const fileArray = Array.from(files);
+            const remainingSlots = maxFiles - images.length;
+            const filesToProcess = fileArray.slice(0, remainingSlots);
 
-        return { id, file, preview: "", progress: 0, status: "uploading" as const }
-      })
+            const newImages: ImageFile[] = filesToProcess.map((file) => {
+                const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      setImages((prev) => [...prev, ...newImages])
-      newImages.forEach((img) => {
-        if (img.status !== "error") setTimeout(() => simulateUpload(img.id), 50)
-      })
+                if (!file.type.startsWith('image/') || file.size > maxSize) {
+                    return {
+                        id,
+                        file,
+                        preview: '',
+                        progress: 0,
+                        status: 'error' as const,
+                    };
+                }
 
-      onFilesChange?.([...images, ...newImages].filter((i) => i.status !== "error").map((i) => i.file))
-    },
-    [images, maxFiles, maxSize, onFilesChange, simulateUpload]
-  )
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    setImages((prev) =>
+                        prev.map((img) =>
+                            img.id === id
+                                ? {
+                                      ...img,
+                                      preview: e.target?.result as string,
+                                  }
+                                : img,
+                        ),
+                    );
+                };
+                reader.readAsDataURL(file);
 
-  const handleRemove = React.useCallback((id: string) => {
-    setImages((prev) => {
-      const updated = prev.filter((img) => img.id !== id)
-      onFilesChange?.(updated.filter((i) => i.status !== "error").map((i) => i.file))
-      return updated
-    })
-  }, [onFilesChange])
+                return {
+                    id,
+                    file,
+                    preview: '',
+                    progress: 0,
+                    status: 'uploading' as const,
+                };
+            });
 
-  return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {images.map((image) => (
-        <Tooltip key={image.id}>
-          <TooltipTrigger asChild>
-            <div className="group relative size-14 overflow-hidden rounded-md border bg-muted">
-              {image.preview ? (
-                <img src={image.preview} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <ImageIcon className="size-5 text-muted-foreground" />
-                </div>
-              )}
+            setImages((prev) => [...prev, ...newImages]);
+            newImages.forEach((img) => {
+                if (img.status !== 'error') {
+                    setTimeout(() => simulateUpload(img.id), 50);
+                }
+            });
 
-              {/* Progress overlay */}
-              {image.status === "uploading" && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/70">
-                  <Progress value={Math.min(image.progress, 100)} className="h-1 w-10" />
-                </div>
-              )}
+            onFilesChange?.(
+                [...images, ...newImages]
+                    .filter((i) => i.status !== 'error')
+                    .map((i) => i.file),
+            );
+        },
+        [images, maxFiles, maxSize, onFilesChange, simulateUpload],
+    );
 
-              {/* Status icons */}
-              {image.status === "success" && (
-                <div className="absolute bottom-0.5 right-0.5 rounded-full bg-success p-0.5">
-                  <Check className="size-2.5 text-success-foreground" />
-                </div>
-              )}
-              {image.status === "error" && (
-                <div className="absolute bottom-0.5 right-0.5 rounded-full bg-destructive p-0.5">
-                  <AlertCircle className="size-2.5 text-white" />
-                </div>
-              )}
+    const handleDrop = React.useCallback(
+        (droppedFiles: FileList) => {
+            processFiles(droppedFiles);
+        },
+        [processFiles],
+    );
 
-              {/* Remove button */}
-              <button
-                type="button"
-                onClick={() => handleRemove(image.id)}
-                className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-foreground/80 text-background opacity-0 transition-opacity group-hover:opacity-100"
-                aria-label="Remove"
-              >
-                <X className="size-2.5" />
-              </button>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">{image.file.name}</TooltipContent>
-        </Tooltip>
-      ))}
+    const { dragProps } = useDragOver({ onDrop: handleDrop });
 
-      {images.length < maxFiles && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          className="size-14 border-dashed"
+    const handleRemove = React.useCallback(
+        (id: string) => {
+            setImages((prev) => {
+                const updated = prev.filter((img) => img.id !== id);
+                onFilesChange?.(
+                    updated
+                        .filter((i) => i.status !== 'error')
+                        .map((i) => i.file),
+                );
+
+                return updated;
+            });
+        },
+        [onFilesChange],
+    );
+
+    return (
+        <div
+            className={cn('flex flex-wrap items-center gap-2', className)}
+            {...dragProps}
         >
-          <Plus className="size-5 text-muted-foreground" />
-        </Button>
-      )}
+            {images.map((image) => (
+                <Tooltip key={image.id}>
+                    <TooltipTrigger asChild>
+                        <div className="group relative size-14 overflow-hidden rounded-md border bg-muted">
+                            {image.preview ? (
+                                <img
+                                    src={image.preview}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-full w-full items-center justify-center">
+                                    <ImageIcon className="size-5 text-muted-foreground" />
+                                </div>
+                            )}
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={(e) => e.target.files && processFiles(e.target.files)}
-        className="sr-only"
-      />
-    </div>
-  )
+                            {image.status === 'uploading' && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+                                    <Progress
+                                        value={Math.min(image.progress, 100)}
+                                        className="h-1 w-10"
+                                    />
+                                </div>
+                            )}
+
+                            {image.status === 'success' && (
+                                <div className="bg-success absolute right-0.5 bottom-0.5 rounded-full p-0.5">
+                                    <Check className="text-success-foreground size-2.5" />
+                                </div>
+                            )}
+                            {image.status === 'error' && (
+                                <div className="absolute right-0.5 bottom-0.5 rounded-full bg-destructive p-0.5">
+                                    <AlertCircle className="size-2.5 text-white" />
+                                </div>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={() => handleRemove(image.id)}
+                                className="absolute top-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-foreground/80 text-background opacity-0 transition-opacity group-hover:opacity-100"
+                                aria-label="Remove"
+                            >
+                                <X className="size-2.5" />
+                            </button>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                        {image.file.name}
+                    </TooltipContent>
+                </Tooltip>
+            ))}
+
+            {images.length < maxFiles && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => inputRef.current?.click()}
+                    className="size-14 border-dashed"
+                >
+                    <Plus className="size-5 text-muted-foreground" />
+                </Button>
+            )}
+
+            <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                    if (e.target.files) {
+                        processFiles(e.target.files);
+                    }
+                }}
+                className="sr-only"
+            />
+        </div>
+    );
 }

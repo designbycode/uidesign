@@ -3,9 +3,8 @@
   "name": "avatar-dropzone-outlined",
   "title": "Avatar Dropzone Outlined",
   "description": "An outlined avatar dropzone component.",
-  "dependencies": [
-    "avatar",
-    "spinner"
+  "registryDependencies": [
+    "button"
   ],
   "files": [
     {

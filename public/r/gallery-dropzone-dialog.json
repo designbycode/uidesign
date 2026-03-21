@@ -3,8 +3,10 @@
   "name": "gallery-dropzone-dialog",
   "title": "Gallery Dropzone Dialog",
   "description": "A gallery dropzone with dialog functionality.",
-  "dependencies": [
+  "registryDependencies": [
     "button",
+    "progress",
+    "badge",
     "dialog"
   ],
   "files": [

@@ -3,9 +3,12 @@
   "name": "avatar-dropzone-card",
   "title": "Avatar Dropzone Card",
   "description": "An avatar dropzone with card styling.",
-  "dependencies": [
+  "registryDependencies": [
     "avatar",
-    "spinner"
+    "button",
+    "card",
+    "progress",
+    "badge"
   ],
   "files": [
     {
