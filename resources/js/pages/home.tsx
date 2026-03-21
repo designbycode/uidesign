@@ -1,10 +1,11 @@
 import * as React from 'react';
 import MainLayout from '@/layouts/main-layout';
+import Wrapper from '@/components/wrapper';
 
 export default function Home() {
     return (
         <MainLayout>
-            <div className="container mx-auto px-4 py-8">
+            <Wrapper className="my-12">
                 <div className="mb-8">
                     <h1 className="mb-2 text-4xl font-bold">
                         Dropzone Components
@@ -14,7 +15,7 @@ export default function Home() {
                         for uploading images
                     </p>
                 </div>
-            </div>
+            </Wrapper>
         </MainLayout>
     );
 }
