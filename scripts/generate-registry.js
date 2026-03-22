@@ -30,7 +30,7 @@ const HOMEPAGE = 'https://uidesign.co.za';
 const NAME = 'uidesign';
 
 // Files/directories to exclude from processing
-const EXCLUDED_FILES = ['index.ts', 'types.ts', 'utils.ts', 'index.js'];
+const EXCLUDED_FILES = ['index.ts', 'index.ts', 'dropzone.ts', 'index.js'];
 const EXCLUDED_DIRS = ['node_modules', '.git'];
 
 // Regex patterns for parsing imports
@@ -42,7 +42,7 @@ const EXTERNAL_PACKAGE_PATTERN = /from\s+['"](@[\w-]+\/[\w-]+)['"]/g;
 const HOOK_NAME_MAP = {
     'use-drag': 'use-drag-over',
     'use-upload': 'use-upload-progress',
-    'use-image': 'use-image-dropzone',
+    'use-image': 'use-image-components',
     'use-sortable': 'use-sortable-files',
     'use-file': 'use-file-collection',
     'use-preview': 'use-file-preview',
@@ -96,14 +96,14 @@ function generateDescription(componentName) {
 function getComponentType(componentName) {
     if (componentName.includes('Dropzone')) {
         if (componentName.includes('Avatar')) {
-            return 'avatar dropzone';
+            return 'avatar components';
         }
 
         if (componentName.includes('Gallery')) {
-            return 'gallery dropzone';
+            return 'gallery components';
         }
 
-        return 'dropzone';
+        return 'components';
     }
 
     return componentName

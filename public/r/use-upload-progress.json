@@ -1,0 +1,13 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "use-upload-progress",
+  "description": "Use upload progress hook",
+  "files": [
+    {
+      "path": "registry/new-york/dropzone/hooks/use-upload-progress.ts",
+      "content": "'use client';\n\nimport { useCallback, useRef } from 'react';\n\nexport interface UseUploadProgressOptions {\n    onComplete?: (id: string) => void;\n    onProgress?: (id: string, progress: number) => void;\n    intervalMs?: number;\n    incrementMax?: number;\n    incrementMin?: number;\n}\n\nexport function useUploadProgress(options: UseUploadProgressOptions = {}) {\n    const {\n        onComplete,\n        onProgress,\n        intervalMs = 150,\n        incrementMax = 20,\n        incrementMin = 10,\n    } = options;\n\n    const intervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(\n        new Map(),\n    );\n\n    const clearUploadInterval = useCallback((id: string) => {\n        const interval = intervalsRef.current.get(id);\n\n        if (interval) {\n            clearInterval(interval);\n            intervalsRef.current.delete(id);\n        }\n    }, []);\n\n    const simulateUpload = useCallback(\n        (\n            id: string,\n            setProgress?: (updater: (prev: number) => number) => void,\n        ) => {\n            const interval = setInterval(() => {\n                setProgress?.((prev) => {\n                    const nextProgress =\n                        prev + Math.random() * incrementMax + incrementMin;\n\n                    if (nextProgress >= 100) {\n                        clearUploadInterval(id);\n                        onComplete?.(id);\n\n                        return 100;\n                    }\n\n                    onProgress?.(id, nextProgress);\n\n                    return nextProgress;\n                });\n            }, intervalMs);\n\n            intervalsRef.current.set(id, interval);\n        },\n        [\n            clearUploadInterval,\n            incrementMax,\n            incrementMin,\n            intervalMs,\n            onComplete,\n            onProgress,\n        ],\n    );\n\n    const cancelUpload = useCallback(\n        (id: string) => {\n            clearUploadInterval(id);\n        },\n        [clearUploadInterval],\n    );\n\n    const cancelAll = useCallback(() => {\n        intervalsRef.current.forEach((interval) => {\n            clearInterval(interval);\n        });\n        intervalsRef.current.clear();\n    }, []);\n\n    return {\n        simulateUpload,\n        cancelUpload,\n        cancelAll,\n    };\n}\n",
+      "type": "registry:hook"
+    }
+  ],
+  "type": "registry:hook"
+}

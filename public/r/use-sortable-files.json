@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "use-sortable-files",
+  "description": "Use sortable files hook",
+  "dependencies": [
+    "@dnd-kit/react"
+  ],
+  "registryDependencies": [
+    "http://localhost:8000/r/dropzone-types.json"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/dropzone/hooks/use-sortable-files.ts",
+      "content": "'use client';\n\nimport { useCallback } from 'react';\n\nimport type { SortableItem, DragEndEvent } from './types';\n\ninterface SortableSource {\n    initialIndex: number;\n    index: number;\n}\n\nfunction isSortable(source: unknown): source is SortableSource {\n    if (typeof source !== 'object' || source === null) {\n        return false;\n    }\n\n    const obj = source as Record<string, unknown>;\n\n    return (\n        typeof obj.initialIndex === 'number' && typeof obj.index === 'number'\n    );\n}\n\nexport interface UseSortableFilesOptions<T extends SortableItem> {\n    items: T[];\n    onReorder?: (items: T[]) => void;\n    onReorderFiles?: (files: File[]) => void;\n    getFile?: (item: T) => File;\n}\n\nexport interface UseSortableFilesReturn<T extends SortableItem> {\n    items: T[];\n    handleDragEnd: (event: DragEndEvent) => void;\n    isSortableSource: (source: unknown) => boolean;\n    setItems: React.Dispatch<React.SetStateAction<T[]>>;\n}\n\nexport function useSortableFiles<T extends SortableItem>(\n    options: UseSortableFilesOptions<T>,\n): UseSortableFilesReturn<T> {\n    const { items, onReorder, onReorderFiles, getFile } = options;\n\n    const handleDragEnd = useCallback(\n        (event: DragEndEvent) => {\n            if (event.canceled) {\n                return;\n            }\n\n            const { source } = event.operation;\n\n            if (isSortable(source)) {\n                const { initialIndex, index } = source;\n\n                if (initialIndex !== index) {\n                    onReorder?.(items);\n\n                    const newItems = [...items];\n                    const [removed] = newItems.splice(initialIndex, 1);\n                    newItems.splice(index, 0, removed);\n\n                    onReorder?.(newItems);\n\n                    if (onReorderFiles && getFile) {\n                        const reorderedFiles = newItems.map(getFile);\n                        onReorderFiles(reorderedFiles);\n                    }\n                }\n            }\n        },\n        [getFile, items, onReorder, onReorderFiles],\n    );\n\n    const isSortableSource = useCallback((source: unknown): boolean => {\n        return isSortable(source);\n    }, []);\n\n    const setItems = useCallback(\n        (updater: T[] | ((prev: T[]) => T[])) => {\n            const newItems =\n                typeof updater === 'function'\n                    ? (updater as (prev: T[]) => T[])(items)\n                    : updater;\n\n            onReorder?.(newItems);\n        },\n        [items, onReorder],\n    );\n\n    return {\n        items,\n        handleDragEnd,\n        isSortableSource,\n        setItems,\n    };\n}\n",
+      "type": "registry:hook"
+    }
+  ],
+  "type": "registry:hook"
+}

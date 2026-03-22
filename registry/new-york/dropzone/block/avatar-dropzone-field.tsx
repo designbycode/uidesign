@@ -1,6 +1,7 @@
 'use client';
-
-import { AvatarDropzone } from '../../components/dropzone/avatar-dropzone';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import { AvatarDropzone } from '@/components/avatar-dropzone';
 
 interface AvatarDropzoneFieldProps {
     label?: string;

@@ -12,10 +12,10 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import type { FileWithPreview } from '@/hooks/types';
-import { useImageDropzone } from '@/hooks/use-image-dropzone';
-import { useSortableFiles } from '@/hooks/use-sortable-files';
 import { cn } from '@/lib/utils';
+import type { FileWithPreview } from '@/hooks/types';
+import { useImageDropzone } from '@/hooks/use-image-components';
+import { useSortableFiles } from '@/hooks/use-sortable-files';
 
 interface SortableAvatarProps {
     avatar: FileWithPreview;

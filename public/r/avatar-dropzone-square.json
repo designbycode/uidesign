@@ -2,11 +2,14 @@
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "avatar-dropzone-square",
   "title": "Avatar Dropzone Square",
-  "description": "A square-styled avatar dropzone component.",
+  "description": "A square-styled avatar dropzone component",
+  "registryDependencies": [
+    "http://localhost:8000/r/avatar-dropzone.json"
+  ],
   "files": [
     {
-      "path": "registry/new-york/blocks/dropzones/avatar-dropzone-square.tsx",
-      "content": "'use client';\n\nimport { SingleImageDrop } from '@/components/dropzone/single-image-drop';\n\ninterface AvatarDropzoneSquareProps {\n    className?: string;\n    onFileSelect?: (file: File | null) => void;\n    maxSize?: number;\n    defaultImage?: string;\n}\n\nexport function AvatarDropzoneSquare({\n    className,\n    onFileSelect,\n    maxSize = 5 * 1024 * 1024,\n    defaultImage,\n}: AvatarDropzoneSquareProps) {\n    return (\n        <SingleImageDrop\n            variant=\"square\"\n            onFile={onFileSelect || (() => {})}\n            maxSize={maxSize}\n            preview={defaultImage}\n            className={className}\n        />\n    );\n}\n",
+      "path": "registry/new-york/dropzone/block/avatar-dropzone-square.tsx",
+      "content": "'use client';\n\nimport { AvatarDropzone } from '@/components/avatar-dropzone';\n\ninterface AvatarDropzoneSquareProps {\n    className?: string;\n    onFileSelect?: (file: File) => void;\n    maxSize?: number;\n    defaultImage?: string;\n    onUploadStart?: (file: File) => void;\n    onUploadProgress?: (progress: number) => void;\n    onUploadSuccess?: (file: File, response?: unknown) => void;\n    onUploadError?: (error: string, file?: File) => void;\n    onDelete?: (currentImage: string) => void;\n    onDeleteSuccess?: (deletedUrl: string) => void;\n    onDeleteError?: (error: string) => void;\n}\n\nexport function AvatarDropzoneSquare({\n    className,\n    onFileSelect,\n    maxSize = 5 * 1024 * 1024,\n    defaultImage,\n    onUploadStart,\n    onUploadProgress,\n    onUploadSuccess,\n    onUploadError,\n    onDelete,\n    onDeleteSuccess,\n    onDeleteError,\n}: AvatarDropzoneSquareProps) {\n    return (\n        <AvatarDropzone\n            variant=\"square\"\n            onFileSelect={onFileSelect}\n            maxSize={maxSize}\n            defaultImage={defaultImage}\n            onUploadStart={onUploadStart}\n            onUploadProgress={onUploadProgress}\n            onUploadSuccess={onUploadSuccess}\n            onUploadError={onUploadError}\n            onDelete={onDelete}\n            onDeleteSuccess={onDeleteSuccess}\n            onDeleteError={onDeleteError}\n            className={className}\n        />\n    );\n}\n",
       "type": "registry:block"
     }
   ],

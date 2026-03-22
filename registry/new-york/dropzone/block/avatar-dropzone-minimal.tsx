@@ -1,13 +1,13 @@
 'use client';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import { AvatarDropzone } from '@/components/avatar-dropzone';
 
-import { AvatarDropzone } from '../../components/dropzone/avatar-dropzone';
-
-interface AvatarDropzoneBadgeProps {
+interface AvatarDropzoneMinimalProps {
     className?: string;
     onFileSelect?: (file: File) => void;
     maxSize?: number;
     defaultImage?: string;
-    size?: 'sm' | 'md' | 'lg';
     onUploadStart?: (file: File) => void;
     onUploadProgress?: (progress: number) => void;
     onUploadSuccess?: (file: File, response?: unknown) => void;
@@ -17,12 +17,11 @@ interface AvatarDropzoneBadgeProps {
     onDeleteError?: (error: string) => void;
 }
 
-export function AvatarDropzoneBadge({
+export function AvatarDropzoneMinimal({
     className,
     onFileSelect,
     maxSize = 5 * 1024 * 1024,
     defaultImage,
-    size = 'md',
     onUploadStart,
     onUploadProgress,
     onUploadSuccess,
@@ -30,11 +29,10 @@ export function AvatarDropzoneBadge({
     onDelete,
     onDeleteSuccess,
     onDeleteError,
-}: AvatarDropzoneBadgeProps) {
+}: AvatarDropzoneMinimalProps) {
     return (
         <AvatarDropzone
-            variant="badge"
-            size={size}
+            variant="minimal"
             onFileSelect={onFileSelect}
             maxSize={maxSize}
             defaultImage={defaultImage}

@@ -14,10 +14,17 @@ import {
     CardTitle,
     CardDescription,
 } from '@/components/ui/card';
-import type { FileWithPreview } from '@/hooks/types';
-import { useImageDropzone } from '@/hooks/use-image-dropzone';
-import { useSortableFiles } from '@/hooks/use-sortable-files';
+
 import { cn } from '@/lib/utils';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import type { FileWithPreview } from '@/hooks/types';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import { useImageDropzone } from '@/hooks/use-image-components';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import { useSortableFiles } from '@/hooks/use-sortable-files';
 
 interface SortableAvatarRowItemProps {
     avatar: FileWithPreview;

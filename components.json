@@ -3,7 +3,6 @@
     "style": "new-york",
     "rsc": false,
     "tsx": true,
-    "registry": "registry.json",
     "tailwind": {
         "config": "",
         "css": "resources/css/app.css",
@@ -16,7 +15,12 @@
         "utils": "@/lib/utils",
         "ui": "@/components/ui",
         "lib": "@/lib",
-        "hooks": "@/hooks"
+        "types": "@/types",
+        "hooks": "@/hooks",
+        "registry": "@/registry"
     },
-    "iconLibrary": "lucide"
+    "iconLibrary": "lucide",
+    "registries": {
+        "@uidesign": "http://localhost:8000/r/{name}.json"
+    }
 }

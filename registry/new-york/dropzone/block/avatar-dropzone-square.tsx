@@ -1,8 +1,8 @@
 'use client';
 
-import { AvatarDropzone } from '../../components/dropzone/avatar-dropzone';
+import { AvatarDropzone } from '@/components/avatar-dropzone';
 
-interface AvatarDropzoneMinimalProps {
+interface AvatarDropzoneSquareProps {
     className?: string;
     onFileSelect?: (file: File) => void;
     maxSize?: number;
@@ -16,7 +16,7 @@ interface AvatarDropzoneMinimalProps {
     onDeleteError?: (error: string) => void;
 }
 
-export function AvatarDropzoneMinimal({
+export function AvatarDropzoneSquare({
     className,
     onFileSelect,
     maxSize = 5 * 1024 * 1024,
@@ -28,10 +28,10 @@ export function AvatarDropzoneMinimal({
     onDelete,
     onDeleteSuccess,
     onDeleteError,
-}: AvatarDropzoneMinimalProps) {
+}: AvatarDropzoneSquareProps) {
     return (
         <AvatarDropzone
-            variant="minimal"
+            variant="square"
             onFileSelect={onFileSelect}
             maxSize={maxSize}
             defaultImage={defaultImage}

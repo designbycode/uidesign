@@ -1,12 +1,13 @@
 'use client';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import { AvatarDropzone } from '@/components/avatar-dropzone';
 
-import { AvatarDropzone } from '../../components/dropzone/avatar-dropzone';
-
-interface AvatarDropzoneGhostProps {
+interface AvatarDropzoneOutlinedProps {
     className?: string;
     onFileSelect?: (file: File) => void;
-    defaultImage?: string;
     maxSize?: number;
+    defaultImage?: string;
     onUploadStart?: (file: File) => void;
     onUploadProgress?: (progress: number) => void;
     onUploadSuccess?: (file: File, response?: unknown) => void;
@@ -16,11 +17,11 @@ interface AvatarDropzoneGhostProps {
     onDeleteError?: (error: string) => void;
 }
 
-export function AvatarDropzoneGhost({
+export function AvatarDropzoneOutlined({
     className,
     onFileSelect,
-    defaultImage,
     maxSize = 5 * 1024 * 1024,
+    defaultImage,
     onUploadStart,
     onUploadProgress,
     onUploadSuccess,
@@ -28,10 +29,10 @@ export function AvatarDropzoneGhost({
     onDelete,
     onDeleteSuccess,
     onDeleteError,
-}: AvatarDropzoneGhostProps) {
+}: AvatarDropzoneOutlinedProps) {
     return (
         <AvatarDropzone
-            variant="ghost"
+            variant="outlined"
             onFileSelect={onFileSelect}
             maxSize={maxSize}
             defaultImage={defaultImage}

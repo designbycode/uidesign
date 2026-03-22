@@ -2,11 +2,14 @@
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "avatar-dropzone-outlined",
   "title": "Avatar Dropzone Outlined",
-  "description": "An outlined avatar dropzone component.",
+  "description": "An outlined avatar dropzone component",
+  "registryDependencies": [
+    "http://localhost:8000/r/avatar-dropzone.json"
+  ],
   "files": [
     {
-      "path": "registry/new-york/blocks/dropzones/avatar-dropzone-outlined.tsx",
-      "content": "'use client';\n\nimport { SingleImageDrop } from '@/components/dropzone/single-image-drop';\n\ninterface AvatarDropzoneOutlinedProps {\n    className?: string;\n    onFileSelect?: (file: File | null) => void;\n    maxSize?: number;\n    defaultImage?: string;\n}\n\nexport function AvatarDropzoneOutlined({\n    className,\n    onFileSelect,\n    maxSize = 5 * 1024 * 1024,\n    defaultImage,\n}: AvatarDropzoneOutlinedProps) {\n    return (\n        <SingleImageDrop\n            variant=\"outlined\"\n            onFile={onFileSelect || (() => {})}\n            maxSize={maxSize}\n            preview={defaultImage}\n            showStatusBadge={true}\n            showRemoveButton={true}\n            className={className}\n        />\n    );\n}\n",
+      "path": "registry/new-york/dropzone/block/avatar-dropzone-outlined.tsx",
+      "content": "'use client';\n// eslint-disable-next-line @typescript-eslint/ban-ts-comment\n// @ts-expect-error\nimport { AvatarDropzone } from '@/components/avatar-dropzone';\n\ninterface AvatarDropzoneOutlinedProps {\n    className?: string;\n    onFileSelect?: (file: File) => void;\n    maxSize?: number;\n    defaultImage?: string;\n    onUploadStart?: (file: File) => void;\n    onUploadProgress?: (progress: number) => void;\n    onUploadSuccess?: (file: File, response?: unknown) => void;\n    onUploadError?: (error: string, file?: File) => void;\n    onDelete?: (currentImage: string) => void;\n    onDeleteSuccess?: (deletedUrl: string) => void;\n    onDeleteError?: (error: string) => void;\n}\n\nexport function AvatarDropzoneOutlined({\n    className,\n    onFileSelect,\n    maxSize = 5 * 1024 * 1024,\n    defaultImage,\n    onUploadStart,\n    onUploadProgress,\n    onUploadSuccess,\n    onUploadError,\n    onDelete,\n    onDeleteSuccess,\n    onDeleteError,\n}: AvatarDropzoneOutlinedProps) {\n    return (\n        <AvatarDropzone\n            variant=\"outlined\"\n            onFileSelect={onFileSelect}\n            maxSize={maxSize}\n            defaultImage={defaultImage}\n            onUploadStart={onUploadStart}\n            onUploadProgress={onUploadProgress}\n            onUploadSuccess={onUploadSuccess}\n            onUploadError={onUploadError}\n            onDelete={onDelete}\n            onDeleteSuccess={onDeleteSuccess}\n            onDeleteError={onDeleteError}\n            className={className}\n        />\n    );\n}\n",
       "type": "registry:block"
     }
   ],

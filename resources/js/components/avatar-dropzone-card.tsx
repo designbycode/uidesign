@@ -1,8 +1,8 @@
 'use client';
 
-import { AvatarDropzone } from '../../components/dropzone/avatar-dropzone';
+import { AvatarDropzone } from '@/components/avatar-dropzone';
 
-interface AvatarDropzoneSquareProps {
+interface AvatarDropzoneCardProps {
     className?: string;
     onFileSelect?: (file: File) => void;
     maxSize?: number;
@@ -16,7 +16,7 @@ interface AvatarDropzoneSquareProps {
     onDeleteError?: (error: string) => void;
 }
 
-export function AvatarDropzoneSquare({
+export function AvatarDropzoneCard({
     className,
     onFileSelect,
     maxSize = 5 * 1024 * 1024,
@@ -28,10 +28,10 @@ export function AvatarDropzoneSquare({
     onDelete,
     onDeleteSuccess,
     onDeleteError,
-}: AvatarDropzoneSquareProps) {
+}: AvatarDropzoneCardProps) {
     return (
         <AvatarDropzone
-            variant="square"
+            variant="card"
             onFileSelect={onFileSelect}
             maxSize={maxSize}
             defaultImage={defaultImage}
@@ -42,6 +42,7 @@ export function AvatarDropzoneSquare({
             onDelete={onDelete}
             onDeleteSuccess={onDeleteSuccess}
             onDeleteError={onDeleteError}
+            label="Profile Photo"
             className={className}
         />
     );

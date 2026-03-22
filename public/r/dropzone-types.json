@@ -1,0 +1,13 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dropzone-types",
+  "description": "Shared types for dropzone components",
+  "files": [
+    {
+      "path": "registry/new-york/dropzone/types/index.ts",
+      "content": "export interface FileWithPreview {\n    file: File;\n    preview: string;\n    id: string;\n}\n\nexport interface ImageFile {\n    id: string;\n    file: File;\n    preview: string;\n    status: 'ready' | 'uploading' | 'success' | 'error';\n    progress?: number;\n    error?: string;\n}\n\nexport type UploadStatus = 'ready' | 'uploading' | 'success' | 'error';\n\nexport interface UploadProgress {\n    id: string;\n    progress: number;\n}\n\nexport interface DragOverState {\n    isDragOver: boolean;\n    dragProps: {\n        onDragEnter: (e: DragEvent) => void;\n        onDragLeave: (e: DragEvent) => void;\n        onDrop: (e: DragEvent) => void;\n        onDragOver: (e: DragEvent) => void;\n    };\n}\n\nexport interface SortableItem {\n    id: string;\n}\n\nexport interface DragEndEvent {\n    canceled: boolean;\n    operation: {\n        source: unknown;\n    };\n}\n",
+      "type": "registry:lib"
+    }
+  ],
+  "type": "registry:lib"
+}

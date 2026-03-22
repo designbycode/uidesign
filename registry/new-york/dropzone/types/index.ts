@@ -1,5 +1,3 @@
-'use client';
-
 export interface FileWithPreview {
     file: File;
     preview: string;
@@ -25,10 +23,10 @@ export interface UploadProgress {
 export interface DragOverState {
     isDragOver: boolean;
     dragProps: {
-        onDragEnter: (e: React.DragEvent) => void;
-        onDragLeave: (e: React.DragEvent) => void;
-        onDrop: (e: React.DragEvent) => void;
-        onDragOver: (e: React.DragEvent) => void;
+        onDragEnter: (e: DragEvent) => void;
+        onDragLeave: (e: DragEvent) => void;
+        onDrop: (e: DragEvent) => void;
+        onDragOver: (e: DragEvent) => void;
     };
 }
 

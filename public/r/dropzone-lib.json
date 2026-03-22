@@ -1,0 +1,13 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dropzone-lib",
+  "description": "Utility functions for dropzone components",
+  "files": [
+    {
+      "path": "registry/new-york/dropzone/lib/dropzone.ts",
+      "content": "export function generateId(): string {\n    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;\n}\n\nexport function isImageFile(file: File): boolean {\n    return file.type.startsWith('image/');\n}\n\nexport function isValidImageSize(file: File, maxSizeBytes: number): boolean {\n    return file.size <= maxSizeBytes;\n}\n\nexport function validateImageFile(\n    file: File,\n    maxSizeBytes: number,\n): { valid: boolean; error?: string } {\n    if (!isImageFile(file)) {\n        return { valid: false, error: 'File must be an image' };\n    }\n\n    if (!isValidImageSize(file, maxSizeBytes)) {\n        const maxSizeMB = Math.round(maxSizeBytes / (1024 * 1024));\n\n        return {\n            valid: false,\n            error: `File size must be less than ${maxSizeMB}MB`,\n        };\n    }\n\n    return { valid: true };\n}\n\nexport function formatFileSize(bytes: number): string {\n    if (bytes < 1024) {\n        return `${bytes} B`;\n    }\n\n    if (bytes < 1024 * 1024) {\n        return `${(bytes / 1024).toFixed(1)} KB`;\n    }\n\n    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;\n}\n",
+      "type": "registry:lib"
+    }
+  ],
+  "type": "registry:lib"
+}
